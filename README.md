@@ -18,7 +18,7 @@
 <pre>
 main
   |
-  ---> Dev (Our main branch)
+  ---> dev (Our main branch)
         |
         ----> Ex 1
         |
