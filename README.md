@@ -1,4 +1,3 @@
-<pre>
 # CreativeBlock
 
 ## Developers 
@@ -16,12 +15,12 @@
 `Lab:` 12pm \
 
 ## Branch Roadmap
-
-main \
-  | \
-  ---> Dev (Our main branch)\
-        |\
-        ----> Ex 1\
-        |\
-        ----> Ex 2\
+<pre>
+main
+  |
+  ---> Dev (Our main branch)
+        |
+        ----> Ex 1
+        |
+        ----> Ex 2
 </pre>
