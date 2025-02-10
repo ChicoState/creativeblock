@@ -27,5 +27,6 @@ main
 
 ### Resources
 [React Native Get Started](https://reactnative.dev/docs/environment-setup)\
+[Dockerizing a React App](https://www.docker.com/blog/how-to-dockerize-react-app/)\
 [Markdown Cheatsheet](https://github.com/adam-p/markdown-here/wiki/markdown-cheatsheet)
 
