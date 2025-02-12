@@ -14,6 +14,9 @@
 **Innovation:** Creative Block could be an app that attempts to aid the user in their creative work by saving their ideas and making timelines to guide them through the process and keep them motivated. \
 **Lab:** 12pm
 
+## Style Guide
+**[Google Style Guide: JavaScript](https://google.github.io/styleguide/jsguide.html)**
+
 ## Branch Roadmap
 <pre>
 main
@@ -26,6 +29,7 @@ main
 </pre>
 
 ### Resources
+[Google Style Guide](https://google.github.io/styleguide/)
 [React Native Get Started](https://reactnative.dev/docs/environment-setup)\
 [Dockerizing a React App](https://www.docker.com/blog/how-to-dockerize-react-app/)\
 [Markdown Cheatsheet](https://github.com/adam-p/markdown-here/wiki/markdown-cheatsheet)
