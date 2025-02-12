@@ -29,7 +29,7 @@ main
 </pre>
 
 ### Resources
-[Google Style Guide](https://google.github.io/styleguide/)
+[Google Style Guide](https://google.github.io/styleguide/)\
 [React Native Get Started](https://reactnative.dev/docs/environment-setup)\
 [Dockerizing a React App](https://www.docker.com/blog/how-to-dockerize-react-app/)\
 [Markdown Cheatsheet](https://github.com/adam-p/markdown-here/wiki/markdown-cheatsheet)
