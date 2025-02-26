@@ -13,9 +13,10 @@ const DropdownMenu = () => {
               onValueChange={(itemValue) => setSelectedValue(itemValue)}
               style={styles.picker} >
 
-        <Picker.Item label="Music" value="music" />
-        <Picker.Item label="Software" value="software" />
-        <Picker.Item label="Writing" value="writing" />
+        <Picker.Item label="Music" value="Music" />
+        <Picker.Item label="Software" value="Software" />
+        <Picker.Item label="Writing" value="Writing" />
+        <Picker.Item label="Art" value="Art" />
         
       </Picker>
       <Text style={styles.selectedText}>You selected: {selectedValue}</Text>
