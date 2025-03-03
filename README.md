@@ -34,3 +34,5 @@ main
 [Dockerizing a React App](https://www.docker.com/blog/how-to-dockerize-react-app/)\
 [Markdown Cheatsheet](https://github.com/adam-p/markdown-here/wiki/markdown-cheatsheet)
 
+**Title:** Creative Block (Home Screen Branch)\
+**Goal:** Create a barebones home screen that allows the user to create a new project and view their existing projects. Opening a project will show up as a bare notepad-esque screen where the user can write down their ideas, which will be saved into that project.
