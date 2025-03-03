@@ -19,12 +19,11 @@ enum IdeaTypes {
          }
      return(
          <>
-         <ThemedView style={styles.titleContainer}>
+         <ThemedView style={styles.AddButtonStyle}>
             <Button title = "Add an Idea" onPress = {()=>{setIdeas([...ideas , ideaID]); setIdeaID(ideaID+1) }}  />
-
         </ThemedView>
 
-        <ThemedView style = {styles.bottomContainer}>
+        <ThemedView style = {styles.IdeaTypeStyle}>
             {ideas.map((i)=>{return <TextIdea key = {i} RemoveTextIdea = {RemoveTextIdea} index = {i}/>})}
         </ThemedView>
         </>
@@ -40,7 +39,7 @@ function TextIdea({RemoveTextIdea, index})
         <>
          <ThemedTextInput  placeholder="Type out your thoughts!" onChangeText={onChangeNameText} value={nameText} />
 
-         <ThemedView style = {styles.titleContainer}>
+         <ThemedView style = {styles.AddButtonStyle}>
          <Button title = "Remove This Idea" onPress = {()=> {RemoveTextIdea(index)}}  />
          </ThemedView>
         </>
@@ -50,7 +49,7 @@ function TextIdea({RemoveTextIdea, index})
 export {AddIdeasButton, TextIdea};
 
 const styles = StyleSheet.create({
-    titleContainer: {
+    AddButtonStyle: {
         flexDirection: 'row',
         alignItems: 'start',
         justifyContent: 'flex-end',
@@ -58,7 +57,7 @@ const styles = StyleSheet.create({
         gap: 8,
         //backgroundColor: "red",
     },
-    bottomContainer: {
+    IdeaTypeStyle: {
         //flex: 1,
         justifyContent: 'center',
     }

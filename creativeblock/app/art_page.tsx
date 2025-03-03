@@ -31,7 +31,7 @@ const styles = StyleSheet.create({
         justifyContent: 'flex-end',
         margin: '20',
         gap: 8,
-        overflow
+        //overflow
         //backgroundColor: "red",
     },
     bottomContainer: {

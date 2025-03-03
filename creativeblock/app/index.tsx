@@ -16,6 +16,7 @@ export default function Index() {
               <ThemedText type="title">CreativeBlock</ThemedText>
           </ThemedView>
           <Link href="/createproject"><ThemedText type="link">Create New Project</ThemedText></Link>
+          <Link href="/art_page"><ThemedText type="link">Create New Art Page</ThemedText></Link>
     </ThemedView>
   );
 }
