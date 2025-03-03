@@ -4,7 +4,7 @@ import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
 import { ThemedTextInput } from '@/components/ThemedTextInput';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { useRouter } from '@react-navigation/native';
+import { useRouter } from 'expo-router';
 import { Project } from '@/classes/Project';
 
 export default function CreateProject() {
