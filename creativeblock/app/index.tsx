@@ -396,16 +396,6 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
-<<<<<<< HEAD
-    backgroundColor: "#ffffff",
-  },
-  title: {
-    fontSize: 24,
-    fontWeight: "bold",
-    marginBottom: 20,
-  },
-});
-=======
     padding: 20,
   },
   logoContainer: {
@@ -481,4 +471,3 @@ const styles = StyleSheet.create({
     fontSize: 16,
   },
 });
->>>>>>> 4dc4b23e7f77b962df97e26fb0cdd1b9a52a11d6
