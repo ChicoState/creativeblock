@@ -62,11 +62,9 @@ export default function ProjectHome() {
         const saveCurrentProject = async () => {
             try {
                 await AsyncStorage.setItem('currentProject', JSON.stringify(project));
-                // Navigate to project editor or details screen
-                // For now, we'll just show an alert
-                Alert.alert('Success', `Opening project: ${project.title}`);
-                // You would normally navigate to a project editor here
-                // router.push('/projecteditor');
+                // Navigate to the project view page with the saved current project.
+                console.log(`Opening project: ${project.title}`);
+                router.push('/projectview');
             } catch (error) {
                 console.error('Error saving current project:', error);
                 Alert.alert('Error', 'Failed to open project');
