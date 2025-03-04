@@ -26,6 +26,30 @@ export default function ProjectHome() {
         loadCurrentProject();
     }, []);
 
+    // Updates the current project and saves it.
+    const saveCurrentProject = async () => {
+        if (!project) return;
+        try {
+            await AsyncStorage.setItem('currentProject', JSON.stringify(project));
+
+            // Retrieve the current user to save it under their projects list
+            const user = await AsyncStorage.getItem('currentUser');
+            const storageKey = user ? `projects_${user}` : 'projects_guest';
+
+            const projectsJson = await AsyncStorage.getItem(storageKey);
+            let projects: Project[] = projectsJson ? JSON.parse(projectsJson) : [];
+
+            // Update the specific project in the list
+            const updatedProjects = projects.map((p) =>
+                p.title === project.title ? project : p
+            );
+
+            await AsyncStorage.setItem(storageKey, JSON.stringify(updatedProjects));
+        } catch (error) {
+            console.error('Error saving project:', error);
+        }
+    };
+
     const loadCurrentProject = async () => {
         try {
             const projectJson = await AsyncStorage.getItem('currentProject');
