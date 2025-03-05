@@ -15,4 +15,24 @@ export class Project {
     public setTitle(newTitle: string): void { // Setter for title.
         this.title = newTitle;
     }
+
+    public getIdeas(): Idea[] { // Returns array of ideas.
+        return this.ideas;
+    }
+
+    public addIdea(newIdea?: Idea): void { // Adds a new idea. Will
+        if (newIdea) {
+            this.ideas.push(newIdea);
+        } else {
+            this.ideas.push(new Idea('', ''));
+        }
+    }
+
+    public updateIdea(index: number, newIdea: Idea): void { // Updates the idea at the given index with a new value.
+        this.ideas[index] = newIdea;
+    }
+
+    public removeIdea(index: number): void { // Removes idea at given index.
+        this.ideas.splice(index, 1);
+    }
 }
