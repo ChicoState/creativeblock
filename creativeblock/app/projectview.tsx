@@ -13,8 +13,9 @@ export default function ProjectHome() {
     const [currentUser, setCurrentUser] = useState<string | null>(null);
     const router = useRouter();
 
+    // Load the project on component mount.
     useEffect(() => {
-        // Load the project on component mount.
+        
         const loadCurrentProject = async () => {
             try {
                 const projectJson = await AsyncStorage.getItem('currentProject');
@@ -39,11 +40,19 @@ export default function ProjectHome() {
         loadCurrentProject();
     }, []);
 
+    // Listen to changes in project and save accordingly.
+    useEffect(() => {
+        if (project) {
+            console.log("Update project");
+            saveCurrentProject();
+        }
+    }, [project]); 
+
     const saveCurrentProject = async () => {
-        if (!project) return; 
+        if (!project) return;
 
         try {
-            await AsyncStorage.setItem('currentProject', JSON.stringify(project));
+            await AsyncStorage.setItem('currentProject', JSON.stringify(project.toJSON()));
 
             const user = await AsyncStorage.getItem('currentUser');
             const storageKey = user ? `projects_${user}` : 'projects_guest';
@@ -54,7 +63,7 @@ export default function ProjectHome() {
             const projectIndex = projects.findIndex((p) => p.title === project.title);
 
             // Update project and add it back to projects.
-            projects[projectIndex] = project;
+            projects[projectIndex] = project.toJSON(); // Use toJSON() here as well
             await AsyncStorage.setItem(storageKey, JSON.stringify(projects));
 
             console.log('Project saved successfully!');
@@ -66,21 +75,41 @@ export default function ProjectHome() {
 
     // Adds a new blank idea to the project.
     const handleAddIdea = () => {
-        project?.addIdea();
-        saveCurrentProject();
-        console.log("Project now has " + project?.getIdeas().length + " ideas!");
+        if (!project) return; // Do nothing if null.
+
+        // Add all project ideas, then add new idea and save.
+        const updatedProject = new Project(project.getTitle());
+        for (const idea of project.getIdeas()) {
+            updatedProject.addIdea(new Idea(idea.getTitle(), idea.getDesc()));
+        }
+        updatedProject.addIdea();
+        setProject(updatedProject);
     };
 
     // Updates idea at the given index with a new string value.
     const updateIdea = (index: number, newIdea: Idea) => {
-        project?.updateIdea(index, newIdea);
-        saveCurrentProject();
+        if (!project) return; // Do nothing if null.
+        console.log(newIdea.desc);
+        // Update project with edited idea and save.
+        const updatedProject = new Project(project.getTitle());
+        for (const idea of project.getIdeas()) {
+            updatedProject.addIdea(new Idea(idea.getTitle(), idea.getDesc()));
+        }
+        updatedProject.updateIdea(index, newIdea);
+        setProject(updatedProject);
     };
 
     // Removes the idea at the given index.
     const handleRemoveIdea = (index: number) => {
-        project?.removeIdea(index);
-        saveCurrentProject();
+        if (!project) return; // Do nothing if null.
+
+        // Add all project ideas, remove idea of given index and save.
+        const updatedProject = new Project(project.getTitle());
+        for (const idea of project.getIdeas()) {
+            updatedProject.addIdea(new Idea(idea.getTitle(), idea.getDesc()));
+        }
+        updatedProject.removeIdea(index);
+        setProject(updatedProject);
     };
 
     return (
@@ -103,10 +132,13 @@ export default function ProjectHome() {
                         project.ideas.map((idea, index) => (
                             <ThemedView key={index} style={styles.ideaContainer}>
                                 <ThemedTextInput
-                                    style={styles.input}
-                                    placeholder="Type your idea..."
-                                    value={idea.getTitle()}
-                                    onChangeText={(text) => updateIdea(index, new Idea(project.ideas[index].title, text))}
+                                    style={styles.ideaInput}
+                                    placeholder="Enter idea description."
+                                    defaultValue={idea.getDesc()}
+                                    onEndEditing={(event) => {
+                                        const text = event.nativeEvent.text; // Get the text from the event
+                                        updateIdea(index, new Idea(idea.getTitle(), text));
+                                    }}
                                 />
                                 <Button title="Remove" onPress={() => handleRemoveIdea(index)} />
                             </ThemedView>
@@ -157,5 +189,8 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         alignItems: 'center',
         marginVertical: 5,
+    },
+    ideaInput: {
+        width: 500
     }
 });

@@ -22,4 +22,11 @@ export class Idea {
     public setDesc(newDesc: string):void { // Setter for desc.
         this.desc = newDesc;
     }
+
+    public toJSON() { // Serialize to JSON
+        return {
+            title: this.title,
+            desc: this.desc,
+        };
+    }
 }

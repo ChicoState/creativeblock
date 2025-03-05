@@ -35,4 +35,11 @@ export class Project {
     public removeIdea(index: number): void { // Removes idea at given index.
         this.ideas.splice(index, 1);
     }
+
+    public toJSON() { // Serialize to JSON
+        return {
+            title: this.title,
+            ideas: this.ideas.map(idea => idea.toJSON()), 
+        };
+    }
 }

@@ -3,7 +3,7 @@ import { StyleSheet, TouchableOpacity, FlatList, Alert } from "react-native";
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { useRouter } from 'expo-router';
+import { useRouter, useFocusEffect } from 'expo-router';
 import { Project } from '@/classes/Project';
 
 export default function ProjectHome() {
@@ -13,7 +13,7 @@ export default function ProjectHome() {
     const router = useRouter();
 
     // Load user and projects on component mount
-    useEffect(() => {
+    useFocusEffect(() => {
         const loadData = async () => {
             try {
                 // Get current user
@@ -30,7 +30,7 @@ export default function ProjectHome() {
         };
         
         loadData();
-    }, []);
+    });
 
     // Load projects for current user or guest
     const loadProjects = async (username: string | null) => {
