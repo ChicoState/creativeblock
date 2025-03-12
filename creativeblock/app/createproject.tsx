@@ -6,10 +6,12 @@ import { ThemedTextInput } from '@/components/ThemedTextInput';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useRouter } from 'expo-router';
 import { Project } from '@/classes/Project';
+import { Picker } from "@react-native-picker/picker";
 
 export default function CreateProject() {
     const [nameText, setNameText] = useState('');
     const [currentUser, setCurrentUser] = useState<string | null>(null);
+    const [catagory, setCatagory] = useState("Music");
     const router = useRouter();
 
     // Load current user on component mount
@@ -38,6 +40,7 @@ export default function CreateProject() {
                 title: nameText.trim(),
                 created: new Date().toISOString(),
                 lastEdited: new Date().toISOString(),
+                catagory: catagory.trim()
                 // Add other project properties as needed
             };
 
@@ -87,7 +90,17 @@ export default function CreateProject() {
                 value={nameText}
                 style={styles.input}
             />
+            <Picker
+              catagory={catagory}
+              onValueChange={(itemValue) => setCatagory(itemValue)}
+              style={styles.picker} >
 
+                <Picker.Item label="Music" value="Music" />
+                <Picker.Item label="Software" value="Software" />
+                <Picker.Item label="Writing" value="Writing" />
+                <Picker.Item label="Art" value="Art" />
+                
+            </Picker>
             <ThemedView style={styles.bottomContainer}>
                 <Button
                     title="Create"

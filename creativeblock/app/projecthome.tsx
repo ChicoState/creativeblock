@@ -163,6 +163,7 @@ export default function ProjectHome() {
                             onPress={() => handleOpenProject(item)}
                         >
                             <ThemedText style={styles.projectTitle}>{item.title}</ThemedText>
+                            <ThemedText style={styles.projectDate}>{item.catagory}</ThemedText>
                             <ThemedText style={styles.projectDate}>
                                 Last edited: {new Date(item.lastEdited).toLocaleDateString()}
                             </ThemedText>
