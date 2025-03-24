@@ -7,6 +7,7 @@ export default function RootLayout() {
             <Stack.Screen name="createproject" options={{ title: 'Create Project' }} />
             <Stack.Screen name="projecthome" options={{ title: 'Project Home' }} />
             <Stack.Screen name="projectview" options={{ title: 'Project View' }} />
+            <Stack.Screen name="ideaview" options={{ title: 'Idea View' }} />
         </Stack>
     );
 }

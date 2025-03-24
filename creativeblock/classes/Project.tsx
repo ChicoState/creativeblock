@@ -24,7 +24,7 @@ export class Project {
         if (newIdea) {
             this.ideas.push(newIdea);
         } else {
-            this.ideas.push(new Idea('', ''));
+            this.ideas.push(new Idea(''));
         }
     }
 

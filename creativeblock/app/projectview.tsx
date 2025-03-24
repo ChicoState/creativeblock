@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { StyleSheet, TouchableOpacity, FlatList, Alert, Button } from "react-native";
+import { StyleSheet, TouchableOpacity, Modal, FlatList, Alert, Button } from "react-native";
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
 import { ThemedTextInput } from '@/components/ThemedTextInput'
@@ -9,8 +9,10 @@ import { Project } from '@/classes/Project';
 import { Idea } from '@/classes/Idea';
 
 export default function ProjectHome() {
+    const [nameText, setNameText] = useState(''); // Title for new idea.
     const [project, setProject] = useState<Project | null>(null); // Get/Set for the currently loaded project.
     const [currentUser, setCurrentUser] = useState<string | null>(null);
+    const [isModalVisible, setIsModalVisible] = useState(false);
     const router = useRouter();
 
     // Load the project on component mount.
@@ -74,7 +76,7 @@ export default function ProjectHome() {
     };
 
     // Adds a new blank idea to the project.
-    const handleAddIdea = () => {
+    const handleAddIdea = (title: string) => {
         if (!project) return; // Do nothing if null.
 
         // Add all project ideas, then add new idea and save.
@@ -82,12 +84,14 @@ export default function ProjectHome() {
         for (const idea of project.getIdeas()) {
             updatedProject.addIdea(new Idea(idea.getTitle(), idea.getDesc()));
         }
-        updatedProject.addIdea();
+        updatedProject.addIdea(new Idea(title));
         setProject(updatedProject);
     };
 
+
+    // DEPRECATED
     // Updates idea at the given index with a new string value.
-    const updateIdea = (index: number, newIdea: Idea) => {
+    /*const updateIdea = (index: number, newIdea: Idea) => {
         if (!project) return; // Do nothing if null.
         console.log(newIdea.desc);
         // Update project with edited idea and save.
@@ -97,8 +101,10 @@ export default function ProjectHome() {
         }
         updatedProject.updateIdea(index, newIdea);
         setProject(updatedProject);
-    };
+    };*/
 
+    /*
+    // DEPRECATED
     // Removes the idea at the given index.
     const handleRemoveIdea = (index: number) => {
         if (!project) return; // Do nothing if null.
@@ -111,6 +117,7 @@ export default function ProjectHome() {
         updatedProject.removeIdea(index);
         setProject(updatedProject);
     };
+    */
 
     return (
         <ThemedView style={styles.container}>
@@ -124,28 +131,48 @@ export default function ProjectHome() {
                         ) : (
                             <ThemedText>Guest Mode</ThemedText>
                         )}
-                        <TouchableOpacity style={styles.addButton} onPress={handleAddIdea}>
+                        <TouchableOpacity style={styles.addButton} onPress={() => setIsModalVisible(true)}>
                             <ThemedText style={styles.addButtonText}>[+]New Idea</ThemedText>
                         </TouchableOpacity>
                     </ThemedView>
                     {project.ideas && Array.isArray(project.ideas) && project.ideas.length > 0 ? (
-                        project.ideas.map((idea, index) => (
-                            <ThemedView key={index} style={styles.ideaContainer}>
-                                <ThemedTextInput
-                                    style={styles.ideaInput}
-                                    placeholder="Enter idea description."
-                                    defaultValue={idea.getDesc()}
-                                    onEndEditing={(event) => {
-                                        const text = event.nativeEvent.text; // Get the text from the event
-                                        updateIdea(index, new Idea(idea.getTitle(), text));
-                                    }}
-                                />
-                                <Button title="Remove" onPress={() => handleRemoveIdea(index)} />
-                            </ThemedView>
-                        ))
+                        // Displays a list of ideas.
+                        <FlatList 
+                            data={project.ideas}
+                            keyExtractor={(item, index) => index.toString()}
+                            renderItem={({ item }) => (
+                                <TouchableOpacity
+                                    style={styles.ideaItem}
+                                    //onPress={() => handleOpenProject(item)}
+                                >
+                                    <ThemedText style={styles.ideaTitle}>{item.title}</ThemedText>
+                                    
+                                </TouchableOpacity>
+                            )}
+                        />
                     ) : (
                         <ThemedText>This project has no ideas yet. Try to add one with the "New Idea" button!</ThemedText>
                     )}
+                    <Modal visible={isModalVisible} onRequestClose={() => setIsModalVisible(false)} transparent>
+                        <ThemedView style={styles.ideaModal}>
+                            <ThemedText style={styles.ideaTitle}>Create New Idea</ThemedText>
+                            <ThemedTextInput
+                                style={styles.ideaInput}
+                                placeholder="Idea Name"
+                                defaultValue=''
+                                onChangeText={setNameText}
+                            />
+                            <TouchableOpacity style={styles.modalButtonBlue} onPress={() => {
+                                handleAddIdea(nameText);
+                                setIsModalVisible(false);
+                            }}>
+                                <ThemedText style={styles.addButtonText}>Create Idea</ThemedText>
+                            </TouchableOpacity>
+                            <TouchableOpacity style={styles.modalButtonRed} onPress={() => setIsModalVisible(false)}>
+                                <ThemedText style={styles.addButtonText}>Cancel</ThemedText>
+                            </TouchableOpacity>
+                        </ThemedView>
+                    </Modal>
                 </ThemedView>
                 : 
                 // Load this page instead if project is not yet loaded.
@@ -157,6 +184,7 @@ export default function ProjectHome() {
     );
 
 }
+
 
 
 const styles = StyleSheet.create({
@@ -185,12 +213,50 @@ const styles = StyleSheet.create({
     header: {
         marginBottom: 24,
     },
-    ideaContainer: {
-        flexDirection: 'row',
+    ideaItem: {
+        padding: 16,
+        borderWidth: 1,
+        borderColor: '#ccc',
+        borderRadius: 8,
+        marginBottom: 12,
+    },
+    ideaTitle: {
+        fontSize: 16,
+        fontWeight: 'bold',
+        marginBottom: 4,
+    },
+    ideaModal: {
+        flex: 1,
+        justifyContent: 'center',
         alignItems: 'center',
-        marginVertical: 5,
+        margin: 20,
+        borderRadius: 10,
+        padding: 5,
+        shadowColor: '#000',
+        shadowOffset: {
+            width: 0,
+            height: 2,
+        },
+        shadowOpacity: 0.25,
+        shadowRadius: 4,
+        elevation: 5,
+        borderColor: 'gray',
+        borderWidth: 2,
     },
     ideaInput: {
-        width: 500
-    }
+    },
+    modalButtonBlue: {
+        backgroundColor: '#4A90E2',
+        borderRadius: 5,
+        justifyContent: 'center',
+        alignItems: 'center',
+        padding: 5,
+    },
+    modalButtonRed: {
+        backgroundColor: '#E2904A',
+        borderRadius: 5,
+        justifyContent: 'center',
+        alignItems: 'center',
+        padding: 5,
+    },
 });

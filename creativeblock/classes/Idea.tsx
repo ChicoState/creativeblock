@@ -2,9 +2,8 @@ export class Idea {
     private title: string; // A brief summary of the idea.
     private desc: string;
 
-    constructor(title: string, desc: string) { // Constructor for the Idea class.
+    constructor(title: string) { // Constructor for the Idea class.
         this.title = title;
-        this.desc = desc;
     }
 
     public getTitle(): string { // Getter for title.
