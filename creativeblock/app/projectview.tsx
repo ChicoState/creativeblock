@@ -7,10 +7,12 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useRouter } from 'expo-router';
 import { Project } from '@/classes/Project';
 import { Idea } from '@/classes/Idea';
+import { IdeaDropdown } from './ideaDroptown';
 
 export default function ProjectHome() {
     const [project, setProject] = useState<Project | null>(null); // Get/Set for the currently loaded project.
     const [currentUser, setCurrentUser] = useState<string | null>(null);
+    const [showIdeaTypes, setShowIdeaTypes] = useState(false);
     const router = useRouter();
 
     // Load the project on component mount.
@@ -113,51 +115,61 @@ export default function ProjectHome() {
     };
 
     return (
-        <ThemedView style={styles.container}>
-            {project ?
-                // Load this page if project is not null.
-                <ThemedView>
-                    <ThemedView style={styles.header}>
-                        <ThemedText type="title">{project.title}</ThemedText>
-                        {currentUser ? (
-                            <ThemedText>Signed in as: {currentUser}</ThemedText>
+            <ThemedView style={styles.container}>
+                {project ? (
+                    <>
+                        <ThemedView style={styles.header}>
+                            <ThemedText type="title">{project.getTitle()}</ThemedText>
+                            {currentUser ? (
+                                <ThemedText>Signed in as: {currentUser}</ThemedText>
+                            ) : (
+                                <ThemedText>Guest Mode</ThemedText>
+                            )}
+
+                            {/* Toggle the dropdown instead of directly adding idea */}
+                            <TouchableOpacity 
+                                style={styles.addButton} 
+                                onPress={() => setShowIdeaTypes(!showIdeaTypes)}
+                            >
+                                <ThemedText style={styles.addButtonText}>[+] New Idea</ThemedText>
+                            </TouchableOpacity>
+
+                            {/* Render the dropdown if showIdeaTypes is true */}
+                            <IdeaDropdown
+                                visible={showIdeaTypes}
+                                onSelect={(type) => handleAddIdea(type)}
+                            />
+                        </ThemedView>
+
+                        {/* Display existing ideas */}
+                        {project.getIdeas().length > 0 ? (
+                            project.getIdeas().map((idea, index) => (
+                                <ThemedView key={index} style={styles.ideaContainer}>
+                                    <ThemedTextInput
+                                        style={styles.ideaInput}
+                                        placeholder="Enter idea description."
+                                        defaultValue={idea.getDesc()}
+                                        onEndEditing={(event) => {
+                                            const text = event.nativeEvent.text;
+                                            updateIdea(index, new Idea(idea.getTitle(), text));
+                                        }}
+                                    />
+                                    <Button 
+                                        title="Remove" 
+                                        onPress={() => handleRemoveIdea(index)} 
+                                    />
+                                </ThemedView>
+                            ))
                         ) : (
-                            <ThemedText>Guest Mode</ThemedText>
+                            <ThemedText>No ideas yet. Try adding one!</ThemedText>
                         )}
-                        <TouchableOpacity style={styles.addButton} onPress={handleAddIdea}>
-                            <ThemedText style={styles.addButtonText}>[+]New Idea</ThemedText>
-                        </TouchableOpacity>
-                    </ThemedView>
-                    {project.ideas && Array.isArray(project.ideas) && project.ideas.length > 0 ? (
-                        project.ideas.map((idea, index) => (
-                            <ThemedView key={index} style={styles.ideaContainer}>
-                                <ThemedTextInput
-                                    style={styles.ideaInput}
-                                    placeholder="Enter idea description."
-                                    defaultValue={idea.getDesc()}
-                                    onEndEditing={(event) => {
-                                        const text = event.nativeEvent.text; // Get the text from the event
-                                        updateIdea(index, new Idea(idea.getTitle(), text));
-                                    }}
-                                />
-                                <Button title="Remove" onPress={() => handleRemoveIdea(index)} />
-                            </ThemedView>
-                        ))
-                    ) : (
-                        <ThemedText>This project has no ideas yet. Try to add one with the "New Idea" button!</ThemedText>
-                    )}
-                </ThemedView>
-                : 
-                // Load this page instead if project is not yet loaded.
-                <ThemedText>Loading project...</ThemedText> 
-
-            }
-            
-        </ThemedView>
-    );
-
-}
-
+                    </>
+                ) : (
+                    <ThemedText>Loading project...</ThemedText>
+                )}
+            </ThemedView>
+        );
+    }
 
 const styles = StyleSheet.create({
     container: {
