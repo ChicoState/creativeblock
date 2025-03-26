@@ -5,12 +5,24 @@ import { ThemedView } from '@/components/ThemedView';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useRouter, useFocusEffect } from 'expo-router';
 import { Project } from '@/classes/Project';
+import { Dropdown } from 'react-native-element-dropdown';
+import AntDesign from '@expo/vector-icons/AntDesign';
 
 export default function ProjectHome() {
     const [projects, setProjects] = useState<Project[]>([]);
     const [loading, setLoading] = useState(true);
     const [currentUser, setCurrentUser] = useState<string | null>(null);
+    const [category_filter, set_category_filter] = useState("All")
     const router = useRouter();
+
+    const data = [
+        { label: 'All', value: 'All' },
+        { label: 'Music', value: 'Music' },
+        { label: 'Art', value: 'Art' },
+        { label: 'Software', value: 'Software' },
+        { label: 'Writing', value: 'Writing' },
+      ];
+
 
     // Load user and projects on component mount
     useFocusEffect(() => {
@@ -150,12 +162,38 @@ export default function ProjectHome() {
                     <ThemedText>Guest Mode</ThemedText>
                 )}
             </ThemedView>
+            <ThemedView>
+            <Dropdown
+                style={styles.dropdown}
+                placeholderStyle={styles.placeholderStyle}
+                selectedTextStyle={styles.selectedTextStyle}
+                inputSearchStyle={styles.inputSearchStyle}
+                iconStyle={styles.iconStyle}
+                data={data}
+                search
+                maxHeight={300}
+                labelField="label"
+                valueField="value"
+                placeholder="Select item"
+                searchPlaceholder="Search..."
+                onChange={item => {
+                    set_category_filter(item.value);
+                }}
+                renderLeftIcon={() => (
+                <AntDesign style={styles.icon} color="black" name="Safety" size={20} />
+                )}
+            />
+            </ThemedView>
             
             <ThemedView style={styles.projectsContainer}>
                 <ThemedText style={styles.sectionTitle}>Your Projects</ThemedText>
                 
                 <FlatList
-                    data={projects}
+                    data={
+                        category_filter === "All"
+                            ? projects
+                            : projects.filter(item => item.category === category_filter)
+                    }
                     keyExtractor={(item, index) => index.toString()}
                     renderItem={({ item }) => (
                         <TouchableOpacity 
@@ -163,7 +201,7 @@ export default function ProjectHome() {
                             onPress={() => handleOpenProject(item)}
                         >
                             <ThemedText style={styles.projectTitle}>{item.title}</ThemedText>
-                            <ThemedText style={styles.projectDate}>{item.catagory}</ThemedText>
+                            <ThemedText style={styles.projectDate}>{item.category}</ThemedText>
                             <ThemedText style={styles.projectDate}>
                                 Last edited: {new Date(item.lastEdited).toLocaleDateString()}
                             </ThemedText>
@@ -277,5 +315,28 @@ const styles = StyleSheet.create({
     signOutText: {
         color: '#4A90E2',
         fontSize: 16,
-    }
+    },
+    dropdown: {
+        margin: 16,
+        height: 50,
+        borderBottomColor: 'gray',
+        borderBottomWidth: 0.5,
+      },
+      icon: {
+        marginRight: 5,
+      },
+      placeholderStyle: {
+        fontSize: 16,
+      },
+      selectedTextStyle: {
+        fontSize: 16,
+      },
+      iconStyle: {
+        width: 20,
+        height: 20,
+      },
+      inputSearchStyle: {
+        height: 40,
+        fontSize: 16,
+      },
 });

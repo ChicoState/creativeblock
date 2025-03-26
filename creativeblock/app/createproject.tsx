@@ -6,13 +6,23 @@ import { ThemedTextInput } from '@/components/ThemedTextInput';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useRouter } from 'expo-router';
 import { Project } from '@/classes/Project';
-import { Picker } from "@react-native-picker/picker";
+import { Dropdown } from 'react-native-element-dropdown';
+import AntDesign from '@expo/vector-icons/AntDesign';
+
 
 export default function CreateProject() {
     const [nameText, setNameText] = useState('');
     const [currentUser, setCurrentUser] = useState<string | null>(null);
-    const [catagory, setCatagory] = useState("Music");
+    const [category, setcategory] = useState("Music");
     const router = useRouter();
+
+    const data = [
+        { label: 'All', value: 'All' },
+        { label: 'Music', value: 'Music' },
+        { label: 'Art', value: 'Art' },
+        { label: 'Software', value: 'Software' },
+        { label: 'Writing', value: 'Writing' },
+      ];
 
     // Load current user on component mount
     useEffect(() => {
@@ -40,7 +50,7 @@ export default function CreateProject() {
                 title: nameText.trim(),
                 created: new Date().toISOString(),
                 lastEdited: new Date().toISOString(),
-                catagory: catagory.trim()
+                category: category.trim()
                 // Add other project properties as needed
             };
 
@@ -90,17 +100,26 @@ export default function CreateProject() {
                 value={nameText}
                 style={styles.input}
             />
-            <Picker
-              catagory={catagory}
-              onValueChange={(itemValue) => setCatagory(itemValue)}
-              style={styles.picker} >
-
-                <Picker.Item label="Music" value="Music" />
-                <Picker.Item label="Software" value="Software" />
-                <Picker.Item label="Writing" value="Writing" />
-                <Picker.Item label="Art" value="Art" />
-                
-            </Picker>
+            <Dropdown
+                style={styles.dropdown}
+                placeholderStyle={styles.placeholderStyle}
+                selectedTextStyle={styles.selectedTextStyle}
+                inputSearchStyle={styles.inputSearchStyle}
+                iconStyle={styles.iconStyle}
+                data={data}
+                search
+                maxHeight={300}
+                labelField="label"
+                valueField="value"
+                placeholder="Select item"
+                searchPlaceholder="Search..."
+                onChange={item => {
+                    setcategory(item.value);
+                }}
+                renderLeftIcon={() => (
+                <AntDesign style={styles.icon} color="black" name="Safety" size={20} />
+                )}
+            />
             <ThemedView style={styles.bottomContainer}>
                 <Button
                     title="Create"
@@ -127,5 +146,28 @@ const styles = StyleSheet.create({
     bottomContainer: {
         flex: 1,
         justifyContent: 'flex-end',
-    }
+    },
+    dropdown: {
+        margin: 16,
+        height: 50,
+        borderBottomColor: 'gray',
+        borderBottomWidth: 0.5,
+      },
+      icon: {
+        marginRight: 5,
+      },
+      placeholderStyle: {
+        fontSize: 16,
+      },
+      selectedTextStyle: {
+        fontSize: 16,
+      },
+      iconStyle: {
+        width: 20,
+        height: 20,
+      },
+      inputSearchStyle: {
+        height: 40,
+        fontSize: 16,
+      },
 });
