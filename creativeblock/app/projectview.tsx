@@ -250,9 +250,7 @@ const styles = StyleSheet.create({
     ideaModal: {
         flex: 1,
         justifyContent: 'flex-start',
-        alignItems: 'center',
-        margin: 20,
-        //borderRadius: 10,
+        alignItems: 'flex-start',
         padding: 5,
         shadowColor: '#000',
         shadowOffset: {
