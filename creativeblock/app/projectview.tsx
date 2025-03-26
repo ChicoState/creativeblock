@@ -142,8 +142,12 @@ export default function ProjectHome() {
                                 onChangeText={setNameText}
                             />
                             <TouchableOpacity style={styles.createModalButtonBlue} onPress={() => {
-                                handleAddIdea(nameText);
-                                setIsCreateModalVisible(false);
+                                if (nameText != "") {
+                                    handleAddIdea(nameText);
+                                    setIsCreateModalVisible(false);
+                                } else {
+                                    Alert.alert('Creation Failed', 'Please enter a valid title.');
+                                }
                             }}>
                                 <ThemedText style={styles.addButtonText}>Create Idea</ThemedText>
                             </TouchableOpacity>
@@ -152,7 +156,7 @@ export default function ProjectHome() {
                             </TouchableOpacity>
                         </ThemedView>
                     </Modal>
-                    <Modal visible={isIdeaModalVisible} onRequestClose={() => setIsIdeaModalVisible(false)} transparent>
+                    <Modal visible={isIdeaModalVisible} onRequestClose={() => setIsIdeaModalVisible(false)}>
                         <ThemedView style={styles.ideaModal}>
                             <ThemedText style={styles.ideaTitle}>{currentIdea?.getTitle()}</ThemedText>
                         </ThemedView>
@@ -201,7 +205,7 @@ const styles = StyleSheet.create({
         padding: 16,
         borderWidth: 1,
         borderColor: '#ccc',
-        borderRadius: 8,
+        borderRadius: 2,
         marginBottom: 12,
     },
     ideaTitle: {
@@ -248,7 +252,7 @@ const styles = StyleSheet.create({
         justifyContent: 'flex-start',
         alignItems: 'center',
         margin: 20,
-        borderRadius: 10,
+        //borderRadius: 10,
         padding: 5,
         shadowColor: '#000',
         shadowOffset: {
