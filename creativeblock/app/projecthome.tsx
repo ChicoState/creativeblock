@@ -1,282 +1,129 @@
+// Firebase Firestore-powered Project Home
 import React, { useState, useEffect } from 'react';
 import { StyleSheet, TouchableOpacity, FlatList, Alert } from "react-native";
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useRouter } from 'expo-router';
-import { Project } from '@/classes/Project';
+import { auth, db } from './firebase';
+import { collection, getDocs } from 'firebase/firestore';
+import { onSnapshot } from 'firebase/firestore';
+
+interface Project {
+  id: string;
+  title: string;
+  created?: any;
+  lastEdited?: any;
+}
 
 export default function ProjectHome() {
-    const [projects, setProjects] = useState<Project[]>([]);
-    const [loading, setLoading] = useState(true);
-    const [currentUser, setCurrentUser] = useState<string | null>(null);
-    const router = useRouter();
+  const [projects, setProjects] = useState<Project[]>([]);
+  const [loading, setLoading] = useState(true);
+  const router = useRouter();
 
-    // Load user and projects on component mount
-    useEffect(() => {
-        const loadData = async () => {
-            try {
-                // Get current user
-                const user = await AsyncStorage.getItem('currentUser');
-                setCurrentUser(user);
-                
-                // Load projects
-                await loadProjects(user);
-            } catch (error) {
-                console.error('Error loading data:', error);
-            } finally {
-                setLoading(false);
-            }
-        };
-        
-        loadData();
-    }, []);
 
-    // Load projects for current user or guest
-    const loadProjects = async (username: string | null) => {
-        try {
-            // Key for storing projects depends on whether there's a logged-in user
-            const storageKey = username ? `projects_${username}` : 'projects_guest';
-            
-            const projectsJson = await AsyncStorage.getItem(storageKey);
-            if (projectsJson) {
-                const loadedProjects = JSON.parse(projectsJson);
-                setProjects(loadedProjects);
-            } else {
-                setProjects([]);
-            }
-        } catch (error) {
-            console.error('Error loading projects:', error);
-            setProjects([]);
-        }
-    };
+useEffect(() => {
+  const user = auth.currentUser;
+  if (!user) return;
 
-    // Navigate to create project screen
-    const handleCreateProject = () => {
-        router.push('/createproject');
-    };
-
-    // Open a selected project
-    const handleOpenProject = (project: Project) => {
-        // Save the current project to AsyncStorage
-        const saveCurrentProject = async () => {
-            try {
-                await AsyncStorage.setItem('currentProject', JSON.stringify(project));
-                // Navigate to project editor or details screen
-                // For now, we'll just show an alert
-                Alert.alert('Success', `Opening project: ${project.title}`);
-                // You would normally navigate to a project editor here
-                // router.push('/projecteditor');
-            } catch (error) {
-                console.error('Error saving current project:', error);
-                Alert.alert('Error', 'Failed to open project');
-            }
-        };
-        
-        saveCurrentProject();
-    };
-
-    // Sign out (for logged-in users)
-    const handleSignOut = async () => {
-        try {
-            await AsyncStorage.removeItem('currentUser');
-            router.replace('/');
-        } catch (error) {
-            console.error('Error signing out:', error);
-        }
-    };
-
-    // Render loading state
-    if (loading) {
-        return (
-            <ThemedView style={styles.centerContainer}>
-                <ThemedText>Loading projects...</ThemedText>
-            </ThemedView>
-        );
+  const unsubscribe = onSnapshot(
+    collection(db, 'users', user.uid, 'projects'),
+    (snapshot) => {
+      const loaded = snapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data(),
+       }as Project));
+      setProjects(loaded);
+      setLoading(false);
+    },
+    (error) => {
+      console.error('Error loading projects:', error);
+      Alert.alert('Error', error.message);
+      setLoading(false);
     }
+  );
 
-    // Render empty state
-    if (projects.length === 0) {
-        return (
-            <ThemedView style={styles.container}>
-                <ThemedView style={styles.header}>
-                    <ThemedText type="title">Project Home</ThemedText>
-                    {currentUser ? (
-                        <ThemedText>Signed in as: {currentUser}</ThemedText>
-                    ) : (
-                        <ThemedText>Guest Mode</ThemedText>
-                    )}
-                </ThemedView>
-                
-                <ThemedView style={styles.emptyContainer}>
-                    <ThemedText style={styles.emptyText}>No projects found</ThemedText>
-                    <ThemedText style={styles.emptySubtext}>Create a new project to get started</ThemedText>
-                    
-                    <TouchableOpacity 
-                        style={styles.createButton} 
-                        onPress={handleCreateProject}
-                    >
-                        <ThemedText style={styles.buttonText}>Create New Project</ThemedText>
-                    </TouchableOpacity>
-                </ThemedView>
-                
-                <ThemedView style={styles.footer}>
-                    {currentUser ? (
-                        <TouchableOpacity 
-                            style={styles.signOutButton} 
-                            onPress={handleSignOut}
-                        >
-                            <ThemedText style={styles.signOutText}>Sign Out</ThemedText>
-                        </TouchableOpacity>
-                    ) : (
-                        <TouchableOpacity 
-                            style={styles.signOutButton} 
-                            onPress={() => router.replace('/')}
-                        >
-                            <ThemedText style={styles.signOutText}>Back to Login</ThemedText>
-                        </TouchableOpacity>
-                    )}
-                </ThemedView>
-            </ThemedView>
-        );
-    }
+  return () => unsubscribe(); // Clean up listener on unmount
+}, []);
 
-    // Render projects list
+
+  const handleCreateProject = () => {
+    router.push('/createproject');
+  };
+
+  const handleOpenProject = (projectId: string) => {
+    router.push({ pathname: '/projectview', params: { id: projectId } });
+  };
+
+  if (loading) {
     return (
-        <ThemedView style={styles.container}>
-            <ThemedView style={styles.header}>
-                <ThemedText type="title">Project Home</ThemedText>
-                {currentUser ? (
-                    <ThemedText>Signed in as: {currentUser}</ThemedText>
-                ) : (
-                    <ThemedText>Guest Mode</ThemedText>
-                )}
-            </ThemedView>
-            
-            <ThemedView style={styles.projectsContainer}>
-                <ThemedText style={styles.sectionTitle}>Your Projects</ThemedText>
-                
-                <FlatList
-                    data={projects}
-                    keyExtractor={(item, index) => index.toString()}
-                    renderItem={({ item }) => (
-                        <TouchableOpacity 
-                            style={styles.projectItem}
-                            onPress={() => handleOpenProject(item)}
-                        >
-                            <ThemedText style={styles.projectTitle}>{item.title}</ThemedText>
-                            <ThemedText style={styles.projectDate}>
-                                Last edited: {new Date(item.lastEdited).toLocaleDateString()}
-                            </ThemedText>
-                        </TouchableOpacity>
-                    )}
-                />
-                
-                <TouchableOpacity 
-                    style={styles.createButton}
-                    onPress={handleCreateProject}
-                >
-                    <ThemedText style={styles.buttonText}>Create New Project</ThemedText>
-                </TouchableOpacity>
-            </ThemedView>
-            
-            <ThemedView style={styles.footer}>
-                {currentUser ? (
-                    <TouchableOpacity 
-                        style={styles.signOutButton}
-                        onPress={handleSignOut}
-                    >
-                        <ThemedText style={styles.signOutText}>Sign Out</ThemedText>
-                    </TouchableOpacity>
-                ) : (
-                    <TouchableOpacity 
-                        style={styles.signOutButton}
-                        onPress={() => router.replace('/')}
-                    >
-                        <ThemedText style={styles.signOutText}>Back to Login</ThemedText>
-                    </TouchableOpacity>
-                )}
-            </ThemedView>
-        </ThemedView>
+      <ThemedView style={styles.container}>
+        <ThemedText>Loading...</ThemedText>
+      </ThemedView>
     );
+  }
+
+  return (
+    <ThemedView style={styles.container}>
+      <ThemedText type="title" style={styles.title}>Your Projects</ThemedText>
+
+      <FlatList
+        data={projects}
+        keyExtractor={(item) => item.id}
+        renderItem={({ item }) => (
+          <TouchableOpacity style={styles.projectItem} onPress={() => handleOpenProject(item.id)}>
+            <ThemedText style={styles.projectTitle}>{item.title}</ThemedText>
+            {item.lastEdited && (
+              <ThemedText style={styles.projectDate}>
+                Last edited: {new Date(item.lastEdited.toDate?.() || item.lastEdited).toLocaleDateString()}
+              </ThemedText>
+            )}
+          </TouchableOpacity>
+        )}
+        ListEmptyComponent={<ThemedText>No projects yet. Create one below!</ThemedText>}
+      />
+
+      <TouchableOpacity style={styles.createButton} onPress={handleCreateProject}>
+        <ThemedText style={styles.buttonText}>Create New Project</ThemedText>
+      </TouchableOpacity>
+    </ThemedView>
+  );
 }
 
 const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-        padding: 20,
-    },
-    centerContainer: {
-        flex: 1,
-        justifyContent: 'center',
-        alignItems: 'center',
-    },
-    header: {
-        marginBottom: 24,
-    },
-    emptyContainer: {
-        flex: 1,
-        justifyContent: 'center',
-        alignItems: 'center',
-    },
-    emptyText: {
-        fontSize: 18,
-        fontWeight: 'bold',
-        marginBottom: 8,
-    },
-    emptySubtext: {
-        fontSize: 16,
-        marginBottom: 24,
-        textAlign: 'center',
-    },
-    projectsContainer: {
-        flex: 1,
-    },
-    sectionTitle: {
-        fontSize: 18,
-        fontWeight: 'bold',
-        marginBottom: 16,
-    },
-    projectItem: {
-        padding: 16,
-        borderWidth: 1,
-        borderColor: '#ccc',
-        borderRadius: 8,
-        marginBottom: 12,
-    },
-    projectTitle: {
-        fontSize: 16,
-        fontWeight: 'bold',
-        marginBottom: 4,
-    },
-    projectDate: {
-        fontSize: 14,
-        color: '#666',
-    },
-    createButton: {
-        backgroundColor: '#4A90E2',
-        borderRadius: 8,
-        padding: 15,
-        alignItems: 'center',
-        marginTop: 16,
-    },
-    buttonText: {
-        color: 'white',
-        fontWeight: 'bold',
-        fontSize: 16,
-    },
-    footer: {
-        marginTop: 16,
-        paddingTop: 16,
-        borderTopWidth: 1,
-        borderTopColor: '#eee',
-    },
-    signOutButton: {
-        padding: 12,
-        alignItems: 'center',
-    },
-    signOutText: {
-        color: '#4A90E2',
-        fontSize: 16,
-    }
+  container: {
+    flex: 1,
+    padding: 20,
+  },
+  title: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    marginBottom: 16,
+  },
+  projectItem: {
+    padding: 16,
+    borderWidth: 1,
+    borderColor: '#ccc',
+    borderRadius: 8,
+    marginBottom: 12,
+  },
+  projectTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+  },
+  projectDate: {
+    fontSize: 14,
+    color: '#777',
+  },
+  createButton: {
+    backgroundColor: '#4A90E2',
+    borderRadius: 8,
+    padding: 15,
+    alignItems: 'center',
+    marginTop: 16,
+  },
+  buttonText: {
+    color: 'white',
+    fontWeight: 'bold',
+    fontSize: 16,
+  },
 });

@@ -1,77 +1,75 @@
 import React from 'react';
-import { StyleSheet, Button } from "react-native";
+import { StyleSheet, Button, Alert } from "react-native";
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
-import { ThemedTextInput } from '@/components/ThemedTextInput'
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import { ThemedTextInput } from '@/components/ThemedTextInput';
 import { useNavigation } from '@react-navigation/native';
-import { Project } from '@/classes/Project'
-
-
-
-
+import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
+import { auth, db } from './firebase'; // Adjust the import path as needed
 
 export default function CreateProject() {
-    const [nameText, onChangeNameText] = React.useState('');
-    const navigation = useNavigation();
-    return (
-        <ThemedView
-            style={{
-                flex: 1,
-                justifyContent: "center",
-                alignItems: "stretch",
-            }}
-        >
-            <ThemedView style={styles.titleContainer}>
-                <ThemedText type="title">Create New Project</ThemedText>
-            </ThemedView>
-            <ThemedTextInput placeholder="Project Title" onChangeText={onChangeNameText} value={nameText} />
-            <ThemedView style={styles.bottomContainer}>
-                <Button title="Create" onPress={() => {
+  const [nameText, onChangeNameText] = React.useState('');
+  const navigation = useNavigation();
 
-                    // Save the project locally.
+  const handleCreate = async () => {
+    const user = auth.currentUser;
 
-                        console.log("Creating Project: " + nameText)
-                        if (true) { // If project is successfully saved, move to projecthome.
-                            navigation.goBack(); // When the user returns from project home, we want them to go back to home, not the create project screen.
-                            navigation.navigate('projecthome' as never); // I don't know why we need the 'as never', but it works. Routes to project home.
-                        }
-                    }
-                }/>
-            </ThemedView>
+    if (!user) {
+      Alert.alert("Error", "You must be signed in to create a project.");
+      return;
+    }
 
+    if (!nameText.trim()) {
+      Alert.alert("Error", "Project title cannot be empty.");
+      return;
+    }
 
-            
-        </ThemedView>
-    );
+    try {
+      const newProject = {
+        title: nameText.trim(),
+        created: serverTimestamp(),
+        lastEdited: serverTimestamp(),
+        ideas: [] // Optional: pre-fill empty ideas array
+      };
+
+      await addDoc(collection(db, 'users', user.uid, 'projects'), newProject);
+
+      console.log("Created project:", nameText);
+      navigation.goBack(); // Go back to projecthome
+      navigation.navigate('projecthome' as never);
+    } catch (error: any) {
+      console.error("Failed to save project:", error);
+      Alert.alert("Error", error.message);
+    }
+  };
+
+  return (
+    <ThemedView style={{ flex: 1, justifyContent: "center", alignItems: "stretch" }}>
+      <ThemedView style={styles.titleContainer}>
+        <ThemedText type="title">Create New Project</ThemedText>
+      </ThemedView>
+
+      <ThemedTextInput
+        placeholder="Project Title"
+        onChangeText={onChangeNameText}
+        value={nameText}
+      />
+
+      <ThemedView style={styles.bottomContainer}>
+        <Button title="Create" onPress={handleCreate} />
+      </ThemedView>
+    </ThemedView>
+  );
 }
-
-async function saveNewProject(p: Project): Promise<boolean> { // Saves the new project in AsyncStorage. Returns true if saved successfully.
-
-    if (p.getTitle() == "") return false; // Return false on empty title.
-    const storeData = async (value: Project) => {
-        try {
-            const jsonValue = JSON.stringify(p);
-            await AsyncStorage.setItem('project', jsonValue);
-            return true;
-        } catch (e) {
-            console.error("Failed to save project."); // Project not created successfully.
-        }
-    };
-    
-    return false;
-}
-
 
 const styles = StyleSheet.create({
-    titleContainer: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        gap: 8,
-    },
-    bottomContainer: {
-        flex: 1,
-        justifyContent: 'flex-end',
-    }
+  titleContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  bottomContainer: {
+    flex: 1,
+    justifyContent: 'flex-end',
+  }
 });
-
