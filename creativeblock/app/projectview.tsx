@@ -19,7 +19,6 @@ export default function ProjectHome() {
 
     // Load the project on component mount.
     useEffect(() => {
-        
         const loadCurrentProject = async () => {
             try {
                 const projectJson = await AsyncStorage.getItem('currentProject');
@@ -53,7 +52,11 @@ export default function ProjectHome() {
     }, [project]); 
 
     const saveCurrentProject = async () => {
-        if (!project) return;
+        if (!project) {
+            console.error('Attempted to save null project');
+            Alert.alert('Error', 'Cannot save null project.');
+            return;
+        }
 
         try {
             await AsyncStorage.setItem('currentProject', JSON.stringify(project.toJSON()));
@@ -96,7 +99,6 @@ export default function ProjectHome() {
         if (idea) setIsIdeaModalVisible(true);
         
     };
-
 
     return (
         <ThemedView style={styles.container}>
@@ -172,8 +174,6 @@ export default function ProjectHome() {
     );
 
 }
-
-
 
 const styles = StyleSheet.create({
     container: {
