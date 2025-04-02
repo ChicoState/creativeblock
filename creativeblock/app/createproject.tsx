@@ -117,7 +117,7 @@ export default function CreateProject() {
                     setcategory(item.value);
                 }}
                 renderLeftIcon={() => (
-                <AntDesign style={styles.icon} color="black" name="Safety" size={20} />
+                <AntDesign style={styles.icon} color="white" name="Safety" size={20} />
                 )}
             />
             <ThemedView style={styles.bottomContainer}>
@@ -150,16 +150,19 @@ const styles = StyleSheet.create({
     dropdown: {
         margin: 16,
         height: 50,
-        borderBottomColor: 'gray',
+        borderBottomColor: 'light gray',
         borderBottomWidth: 0.5,
+        color: "white",
       },
       icon: {
         marginRight: 5,
       },
       placeholderStyle: {
+        color: "white",
         fontSize: 16,
       },
       selectedTextStyle: {
+        color: "white",
         fontSize: 16,
       },
       iconStyle: {

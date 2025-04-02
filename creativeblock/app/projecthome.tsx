@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { StyleSheet, TouchableOpacity, FlatList, Alert } from "react-native";
+import { StyleSheet, TouchableOpacity, FlatList, Alert} from "react-native";
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -12,7 +12,7 @@ export default function ProjectHome() {
     const [projects, setProjects] = useState<Project[]>([]);
     const [loading, setLoading] = useState(true);
     const [currentUser, setCurrentUser] = useState<string | null>(null);
-    const [category_filter, set_category_filter] = useState("All")
+    const [category_filter, set_category_filter] = useState("Art")
     const router = useRouter();
 
     const data = [
@@ -23,7 +23,7 @@ export default function ProjectHome() {
         { label: 'Writing', value: 'Writing' },
       ];
 
-
+    
     // Load user and projects on component mount
     useFocusEffect(() => {
         const loadData = async () => {
@@ -150,7 +150,7 @@ export default function ProjectHome() {
             </ThemedView>
         );
     }
-
+    
     // Render projects list
     return (
         <ThemedView style={styles.container}>
@@ -180,7 +180,7 @@ export default function ProjectHome() {
                     set_category_filter(item.value);
                 }}
                 renderLeftIcon={() => (
-                <AntDesign style={styles.icon} color="black" name="Safety" size={20} />
+                <AntDesign style={styles.icon} color="white" name="Safety" size={20} />
                 )}
             />
             </ThemedView>
@@ -281,6 +281,16 @@ const styles = StyleSheet.create({
         borderRadius: 8,
         marginBottom: 12,
     },
+    item: {
+        padding: 17,
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+      },
+      textItem: {
+        flex: 1,
+        fontSize: 16,
+      },
     projectTitle: {
         fontSize: 16,
         fontWeight: 'bold',
@@ -319,16 +329,19 @@ const styles = StyleSheet.create({
     dropdown: {
         margin: 16,
         height: 50,
-        borderBottomColor: 'gray',
+        borderBottomColor: 'light gray',
         borderBottomWidth: 0.5,
+        color: "white",
       },
       icon: {
         marginRight: 5,
       },
       placeholderStyle: {
+        color: "white",
         fontSize: 16,
       },
       selectedTextStyle: {
+        color: "white",
         fontSize: 16,
       },
       iconStyle: {
