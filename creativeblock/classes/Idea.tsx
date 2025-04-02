@@ -1,7 +1,13 @@
+import { IdeaModule } from '@/classes/IdeaModule';
+
 export class Idea {
     private title: string; // A brief summary of the idea.
-    constructor(title: string) { // Constructor for the Idea class.
+    private modules: IdeaModules[] = [];
+    constructor(title: string, comps?: IdeaModules[]) { // Constructor for the Idea class.
         this.title = title;
+        if (comps) {
+            this.modules = comps;
+        }
     }
 
     public getTitle(): string { // Getter for title.
@@ -12,9 +18,15 @@ export class Idea {
         this.title = newTitle;
     }
 
+    public addModules (module: IdeaModule) {
+        this.modules.push(module);
+    }
+
+
     public toJSON() { // Serialize to JSON
         return {
             title: this.title,
+            modules:  this.modules
         };
     }
 }
