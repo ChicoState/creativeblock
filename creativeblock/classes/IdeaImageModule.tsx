@@ -1,6 +1,6 @@
 import { IdeaModule } from '@/classes/IdeaModule';
 
-export class IdeaImageComponent extends IdeaModule {
+export class IdeaImageModule extends IdeaModule {
     private image: string;
     constructor(image: string) {
         super();

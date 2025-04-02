@@ -18,6 +18,10 @@ export class Idea {
         this.title = newTitle;
     }
 
+    public getModules(): IdeaModule[] {
+        return this.modules;
+    }
+
     public addModules (module: IdeaModule) {
         this.modules.push(module);
     }

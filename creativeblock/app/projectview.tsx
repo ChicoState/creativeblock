@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { StyleSheet, TouchableOpacity, Modal, FlatList, Alert, Button } from "react-native";
+import { StyleSheet, TouchableOpacity, Modal, FlatList, Alert, Button, Switch } from "react-native";
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
 import { ThemedTextInput } from '@/components/ThemedTextInput'
@@ -126,7 +126,7 @@ export default function ProjectHome() {
                                     style={styles.ideaItem}
                                     onPress={() => handleOpenIdea(item)}
                                 >
-                                    <ThemedText style={styles.ideaTitle}>{item.title}</ThemedText>
+                                    <ThemedText style={styles.ideaTitle}>{item.getTitle()}</ThemedText>
                                     
                                 </TouchableOpacity>
                             )}
@@ -161,6 +161,16 @@ export default function ProjectHome() {
                     <Modal visible={isIdeaModalVisible} onRequestClose={() => setIsIdeaModalVisible(false)}>
                         <ThemedView style={styles.ideaModal}>
                             <ThemedText style={styles.ideaTitle}>{currentIdea?.getTitle()}</ThemedText>
+                            <TouchableOpacity style={styles.addButton} onPress={() => }>
+                                <ThemedText style={styles.addButtonText}>[+]New Module</ThemedText>
+                            </TouchableOpacity>
+                            <FlatList
+                                data={currentIdea?.getModules()}
+                                keyExtractor={(item, index) => index.toString()}
+                                renderItem={({ item }) => (
+                                    item.getView()
+                                )}
+                            />
                         </ThemedView>
                     </Modal>
                 </ThemedView>
