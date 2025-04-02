@@ -12,7 +12,7 @@ export default function ProjectHome() {
     const [projects, setProjects] = useState<Project[]>([]);
     const [loading, setLoading] = useState(true);
     const [currentUser, setCurrentUser] = useState<string | null>(null);
-    const [category_filter, set_category_filter] = useState("Art")
+    const [category_filter, set_category_filter] = useState("Music")
     const router = useRouter();
 
     const data = [
