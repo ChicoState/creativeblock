@@ -2,8 +2,8 @@ import { IdeaModule } from '@/classes/IdeaModule';
 
 export class Idea {
     private title: string; // A brief summary of the idea.
-    private modules: IdeaModules[] = [];
-    constructor(title: string, comps?: IdeaModules[]) { // Constructor for the Idea class.
+    private modules: IdeaModule[] = [];
+    constructor(title: string, comps?: IdeaModule[]) { // Constructor for the Idea class.
         this.title = title;
         if (comps) {
             this.modules = comps;
