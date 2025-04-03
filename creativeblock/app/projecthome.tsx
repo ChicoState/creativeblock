@@ -7,6 +7,9 @@ import { useRouter } from 'expo-router';
 import { auth, db } from './firebase';
 import { collection, getDocs } from 'firebase/firestore';
 import { onSnapshot } from 'firebase/firestore';
+import { signOut } from 'firebase/auth';
+import { deleteDoc, doc } from 'firebase/firestore';
+import { Feather } from '@expo/vector-icons'; // for clean minimalist icons
 
 interface Project {
   id: string;
@@ -45,6 +48,42 @@ useEffect(() => {
   return () => unsubscribe(); // Clean up listener on unmount
 }, []);
 
+const handleSignOut = async () => {
+  try {
+    await signOut(auth);
+    router.replace('/'); // send them back to login
+  } catch (error: any) {
+    console.error('Error signing out:', error);
+    Alert.alert('Sign Out Error', error.message);
+  }
+};
+
+const handleDeleteProject = async (projectId: string) => {
+  Alert.alert(
+    'Delete Project',
+    'Are you sure you want to delete this project?',
+    [
+      { text: 'Cancel', style: 'cancel' },
+      {
+        text: 'Delete',
+        style: 'destructive',
+        onPress: async () => {
+          const user = auth.currentUser;
+          if (!user) return;
+
+          try {
+            await deleteDoc(doc(db, 'users', user.uid, 'projects', projectId));
+            // Real-time updates via onSnapshot will auto-refresh the list
+          } catch (error: any) {
+            console.error('Delete error:', error);
+            Alert.alert('Error', error.message);
+          }
+        },
+      },
+    ]
+  );
+};
+
 
   const handleCreateProject = () => {
     router.push('/createproject');
@@ -70,14 +109,22 @@ useEffect(() => {
         data={projects}
         keyExtractor={(item) => item.id}
         renderItem={({ item }) => (
-          <TouchableOpacity style={styles.projectItem} onPress={() => handleOpenProject(item.id)}>
-            <ThemedText style={styles.projectTitle}>{item.title}</ThemedText>
-            {item.lastEdited && (
-              <ThemedText style={styles.projectDate}>
-                Last edited: {new Date(item.lastEdited.toDate?.() || item.lastEdited).toLocaleDateString()}
-              </ThemedText>
-            )}
-          </TouchableOpacity>
+          <ThemedView style={styles.projectRow}>
+  <TouchableOpacity onPress={() => handleOpenProject(item.id)} style={styles.projectInfo}>
+    <ThemedText style={styles.projectTitle}>{item.title}</ThemedText>
+    {item.lastEdited && (
+      <ThemedText style={styles.projectDate}>
+        Last edited: {new Date(item.lastEdited.toDate?.() || item.lastEdited).toLocaleDateString()}
+      </ThemedText>
+    )}
+  </TouchableOpacity>
+
+  <TouchableOpacity onPress={() => handleDeleteProject(item.id)}>
+    <Feather name="trash-2" size={20} color="#ff4d4d" />
+  </TouchableOpacity>
+</ThemedView>
+
+
         )}
         ListEmptyComponent={<ThemedText>No projects yet. Create one below!</ThemedText>}
       />
@@ -85,8 +132,16 @@ useEffect(() => {
       <TouchableOpacity style={styles.createButton} onPress={handleCreateProject}>
         <ThemedText style={styles.buttonText}>Create New Project</ThemedText>
       </TouchableOpacity>
+
+      <TouchableOpacity style={styles.signOutButton} onPress={handleSignOut}>
+      <ThemedText style={styles.signOutText}>Sign Out</ThemedText>
+    </TouchableOpacity>
+
+
     </ThemedView>
   );
+
+  
 }
 
 const styles = StyleSheet.create({
@@ -126,4 +181,49 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     fontSize: 16,
   },
+
+  signOutButton: {
+    marginTop: 24,
+    padding: 12,
+    backgroundColor: '#ff4d4d',
+    borderRadius: 8,
+    alignItems: 'center',
+  },
+  signOutText: {
+    color: '#fff',
+    fontWeight: 'bold',
+    fontSize: 16,
+  },
+
+  deleteText: {
+    color: '#fff',
+    fontWeight: 'bold',
+
+  },
+  
+  deleteButton: {
+    marginTop: 8,
+    backgroundColor: '#ff4d4d',
+    padding: 8,
+    borderRadius: 6,
+    alignItems: 'center',
+  },
+
+  projectRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: 16,
+    borderWidth: 1,
+    borderColor: '#ccc',
+    borderRadius: 8,
+    marginBottom: 12,
+  },
+  projectInfo: {
+    flex: 1,
+    marginRight: 12,
+  },
+  
+  
+  
 });

@@ -28,6 +28,7 @@ export default function Index() {
   const [newUsername, setNewUsername] = useState('');
   const [resetEmail, setResetEmail] = useState('');
   const [isLoading, setIsLoading] = useState(true);
+  const [isCreating, setIsCreating] = useState(false);
 
   const router = useRouter();
 
@@ -64,15 +65,31 @@ export default function Index() {
       Alert.alert('Error', 'Please fill all required fields');
       return;
     }
+  
     if (password !== confirmPassword) {
       Alert.alert('Error', 'Passwords do not match');
       return;
     }
+  
+    setIsCreating(true); // 🟡 Start loading indicator
+  
     try {
       await createUserWithEmailAndPassword(auth, email, password);
-      Alert.alert('Success', 'Account created!', [{ text: 'OK', onPress: goToWelcome }]);
+      
+      Alert.alert('Success', 'Account created!', [
+        { text: 'OK', onPress: goToWelcome }
+      ]);
+  
+      // Clear the fields
+      setNewUsername('');
+      setEmail('');
+      setPassword('');
+      setConfirmPassword('');
     } catch (error: any) {
+      console.error('Signup error:', error);
       Alert.alert('Signup Error', error.message);
+    } finally {
+      setIsCreating(false); // ✅ End loading indicator
     }
   };
 
@@ -130,10 +147,15 @@ export default function Index() {
         <ThemedTextInput placeholder="Email" value={email} onChangeText={setEmail} keyboardType="email-address" style={styles.input} />
         <ThemedTextInput placeholder="Password" value={password} onChangeText={setPassword} secureTextEntry style={styles.input} />
         <ThemedTextInput placeholder="Confirm Password" value={confirmPassword} onChangeText={setConfirmPassword} secureTextEntry style={styles.input} />
-
-        <TouchableOpacity style={styles.primaryButton} onPress={handleCreateAccount}>
-          <ThemedText style={styles.buttonText}>Create Account</ThemedText>
-        </TouchableOpacity>
+        <TouchableOpacity
+  style={[styles.primaryButton, isCreating && { opacity: 0.5 }]}
+  onPress={handleCreateAccount}
+  disabled={isCreating}
+>
+  <ThemedText style={styles.buttonText}>
+    {isCreating ? 'Creating...' : 'Create Account'}
+  </ThemedText>
+</TouchableOpacity>
         <TouchableOpacity style={styles.backButton} onPress={goToWelcome}>
           <ThemedText style={styles.linkText}>Back to Login</ThemedText>
         </TouchableOpacity>
