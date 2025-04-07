@@ -16,6 +16,8 @@ export default function ProjectHome() {
     const [currentUser, setCurrentUser] = useState<string | null>(null);
     const [showIdeaTypes, setShowIdeaTypes] = useState(false);
     const router = useRouter();
+    const [selectedImage, setSelectedImage] = useState<string | null>(null);
+
 
     // Load the project on component mount.
     useEffect(() => {
@@ -50,7 +52,7 @@ export default function ProjectHome() {
             console.log("Update project");
             saveCurrentProject();
         }
-    }, [project]); 
+    }, [project]);
 
     const saveCurrentProject = async () => {
         if (!project) return;
@@ -76,50 +78,70 @@ export default function ProjectHome() {
             Alert.alert('Error', 'Failed to save project. Please try again.');
         }
     };
+    const handleImagePress = async (source: 'camera' | 'gallery') => {
+      let result;
+      if (source === 'camera') {
+        const camPerm = await ImagePicker.requestCameraPermissionsAsync();
+        if (!camPerm.granted) return Alert.alert("Camera permission denied");
+        result = await ImagePicker.launchCameraAsync({
+          mediaTypes: ImagePicker.MediaTypeOptions.Images,
+          quality: 1,
+          allowsEditing: false,
+        });
+      } else {
+        const libPerm = await ImagePicker.requestMediaLibraryPermissionsAsync();
+        if (!libPerm.granted) return Alert.alert("Media Library permission denied");
+        result = await ImagePicker.launchImageLibraryAsync({
+          mediaTypes: ImagePicker.MediaTypeOptions.Images,
+          quality: 1,
+          allowsEditing: false,
+        });
+      }
+
+      if (!result.canceled && result.assets.length > 0) {
+        const uri = result.assets[0].uri;
+
+        if (project) {
+          const updatedProject = new Project(project.getTitle());
+          for (const idea of project.getIdeas()) {
+            updatedProject.addIdea(new Idea(idea.getTitle(), idea.getDesc()));
+          }
+
+          updatedProject.addIdea(new Idea("Image Idea", uri));
+          setProject(updatedProject);
+        }
+        setSelectedImage(uri);
+      }
+    };
+
+    const showImagePickerPrompt = () => {
+        Alert.alert(
+          "Choose Image Source",
+          "How would you like to add your image?",
+          [
+            { text: "Camera", onPress: () => handleImagePress('camera') },
+            { text: "Gallery", onPress: () => handleImagePress('gallery') },
+            { text: "Cancel", style: "cancel" }
+          ]
+        );
+    };
 
     // Adds a new blank idea to the project.
     const handleAddIdea = async (type: string) => {
-        if (!project) return; // Do nothing if null.
-
-        // Add all project ideas, then add new idea and save.
-        const updatedProject = new Project(project.getTitle());
-        for (const idea of project.getIdeas()) {
-            updatedProject.addIdea(new Idea(idea.getTitle(), idea.getDesc()));
-        }
-
-	if (type == 'image'){
-	    const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
-	    if(permissionResult.granted == false){
-	        Alert.alert("Permission to access camera is required.");
-		return;
-	    }
-	    const pickerResult = await ImagePicker.launchImageLibraryAsync({
-	    	mediaTypes: ImagePicker.MediaTypeOptions.Images,
-            	quality: 1,
-            	allowsEditing: false
-	    });
-
-	    if (!pickerResult.canceled && pickerResult.assets.length > 0) {
-            	const uri = pickerResult.assets[0].uri;
-
-		//confirmation box
-		Alert.alert("Image selected", "Your image was successfully chosen!", [
-		    {
-		        text: "OK",
-			onPress: () => {
-			    updatedProject.addIdea(new Idea("Image Idea", uri));
-			    setProject(updatedProject);
-			    setShowIdeaTypes(false);
-			}
-		    }
-		]);
+            if (!project) return;
+            const updatedProject = new Project(project.getTitle());
+            for (const idea of project.getIdeas()) {
+                updatedProject.addIdea(new Idea(idea.getTitle(), idea.getDesc()));
             }
-	    return;
-	}
-	updatedProject.addIdea(new Idea("New Idea", ""));
-        setProject(updatedProject);
-	setShowIdeaTypes(false);
-    };
+            if (type === 'image') {
+                showImagePickerPrompt();
+                setShowIdeaTypes(false);
+                return;
+            }
+            updatedProject.addIdea(new Idea("New Idea", ""));
+            setProject(updatedProject);
+            setShowIdeaTypes(false);
+        };
 
     // Updates idea at the given index with a new string value.
     const updateIdea = (index: number, newIdea: Idea) => {
@@ -160,8 +182,8 @@ export default function ProjectHome() {
                             )}
 
                             {/* Toggle the dropdown instead of directly adding idea */}
-                            <TouchableOpacity 
-                                style={styles.addButton} 
+                            <TouchableOpacity
+                                style={styles.addButton}
                                 onPress={() => setShowIdeaTypes(!showIdeaTypes)}
                             >
                                 <ThemedText style={styles.addButtonText}>[+] New Idea</ThemedText>
@@ -178,27 +200,36 @@ export default function ProjectHome() {
                         {project.getIdeas().length > 0 ? (
                             project.getIdeas().map((idea, index) => (
                                 <ThemedView key={index} style={styles.ideaContainer}>
-				    {idea.getDesc().startsWith("file://") ? (
-                		        <Image 
-                    			    source={{ uri: idea.getDesc() }} 
-                    			    style={{ width: 100, height: 100, marginRight: 10 }}
-                		        />
-            			    ) : (
-                                        <><ThemedTextInput
-                                                style={styles.ideaInput}
-                                                placeholder="Enter idea description."
-                                                defaultValue={idea.getDesc()}
-                                                onEndEditing={(event) => {
-                                                    const text = event.nativeEvent.text;
-                                                    updateIdea(index, new Idea(idea.getTitle(), text));
-                                                }} 
-					    />
-					    <Button
-                                                title="Remove"
-                                                onPress={() => handleRemoveIdea(index)} 
-					    />
-				        </>
-				    )}
+				                    {idea.getDesc().startsWith("file://") ? (
+                                      <ThemedView style={styles.imageBox}>
+                                        <Image
+                                          source={{ uri: idea.getDesc() }}
+                                          style={styles.imagePreview}
+                                        />
+                                        <Button
+                                          title="Remove Image"
+                                          color="red"
+                                          onPress={() => handleRemoveIdea(index)}
+                                        />
+                                      </ThemedView>
+                                    ) : (
+                                      <>
+                                        <ThemedTextInput
+                                          style={styles.ideaInput}
+                                          placeholder="Enter idea description."
+                                          defaultValue={idea.getDesc()}
+                                          onEndEditing={(event) => {
+                                            const text = event.nativeEvent.text;
+                                            updateIdea(index, new Idea(idea.getTitle(), text));
+                                          }}
+                                        />
+                                        <Button
+                                          title="Remove"
+                                          color="red"
+                                          onPress={() => handleRemoveIdea(index)}
+                                        />
+                                      </>
+                                    )}
                                 </ThemedView>
                             ))
                         ) : (
@@ -254,10 +285,12 @@ const styles = StyleSheet.create({
         backgroundColor: '#f0f0f0',
         alignItems: 'center',
         marginBottom: 10,
+        marginRight: 10,
     },
     imagePreview: {
         width: 200,
         height: 200,
         borderRadius: 8,
+        marginBottom: 10,
     },
 });

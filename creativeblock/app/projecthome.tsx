@@ -11,6 +11,7 @@ export default function ProjectHome() {
     const [loading, setLoading] = useState(true);
     const [currentUser, setCurrentUser] = useState<string | null>(null);
     const router = useRouter();
+    
 
     // Load user and projects on component mount
     useFocusEffect(() => {
