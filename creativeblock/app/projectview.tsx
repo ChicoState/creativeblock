@@ -84,7 +84,7 @@ export default function ProjectView() {
     return (
       <ThemedView style={styles.container}>
         <ThemedText>Project not found.</ThemedText>
-      </ThemedView>
+      </ThemedView> 
     );
   }
 
@@ -122,6 +122,9 @@ const styles = StyleSheet.create({
     padding: 20,
   },
   header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
     marginBottom: 24,
   },
   addButton: {
