@@ -8,6 +8,8 @@ import { useRouter } from 'expo-router';
 import { Project } from '@/classes/Project';
 import { Idea } from '@/classes/Idea';
 import { IdeaDropdown } from './ideaDroptown';
+import * as ImagePicker from 'expo-image-picker';
+import { Image } from 'react-native';
 
 export default function ProjectHome() {
     const [project, setProject] = useState<Project | null>(null); // Get/Set for the currently loaded project.
@@ -76,7 +78,7 @@ export default function ProjectHome() {
     };
 
     // Adds a new blank idea to the project.
-    const handleAddIdea = () => {
+    const handleAddIdea = async (type: string) => {
         if (!project) return; // Do nothing if null.
 
         // Add all project ideas, then add new idea and save.
@@ -84,8 +86,39 @@ export default function ProjectHome() {
         for (const idea of project.getIdeas()) {
             updatedProject.addIdea(new Idea(idea.getTitle(), idea.getDesc()));
         }
-        updatedProject.addIdea();
+
+	if (type == 'image'){
+	    const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
+	    if(permissionResult.granted == false){
+	        Alert.alert("Permission to access camera is required.");
+		return;
+	    }
+	    const pickerResult = await ImagePicker.launchImageLibraryAsync({
+	    	mediaTypes: ImagePicker.MediaTypeOptions.Images,
+            	quality: 1,
+            	allowsEditing: false
+	    });
+
+	    if (!pickerResult.canceled && pickerResult.assets.length > 0) {
+            	const uri = pickerResult.assets[0].uri;
+
+		//confirmation box
+		Alert.alert("Image selected", "Your image was successfully chosen!", [
+		    {
+		        text: "OK",
+			onPress: () => {
+			    updatedProject.addIdea(new Idea("Image Idea", uri));
+			    setProject(updatedProject);
+			    setShowIdeaTypes(false);
+			}
+		    }
+		]);
+            }
+	    return;
+	}
+	updatedProject.addIdea(new Idea("New Idea", ""));
         setProject(updatedProject);
+	setShowIdeaTypes(false);
     };
 
     // Updates idea at the given index with a new string value.
@@ -145,19 +178,27 @@ export default function ProjectHome() {
                         {project.getIdeas().length > 0 ? (
                             project.getIdeas().map((idea, index) => (
                                 <ThemedView key={index} style={styles.ideaContainer}>
-                                    <ThemedTextInput
-                                        style={styles.ideaInput}
-                                        placeholder="Enter idea description."
-                                        defaultValue={idea.getDesc()}
-                                        onEndEditing={(event) => {
-                                            const text = event.nativeEvent.text;
-                                            updateIdea(index, new Idea(idea.getTitle(), text));
-                                        }}
-                                    />
-                                    <Button 
-                                        title="Remove" 
-                                        onPress={() => handleRemoveIdea(index)} 
-                                    />
+				    {idea.getDesc().startsWith("file://") ? (
+                		        <Image 
+                    			    source={{ uri: idea.getDesc() }} 
+                    			    style={{ width: 100, height: 100, marginRight: 10 }}
+                		        />
+            			    ) : (
+                                        <><ThemedTextInput
+                                                style={styles.ideaInput}
+                                                placeholder="Enter idea description."
+                                                defaultValue={idea.getDesc()}
+                                                onEndEditing={(event) => {
+                                                    const text = event.nativeEvent.text;
+                                                    updateIdea(index, new Idea(idea.getTitle(), text));
+                                                }} 
+					    />
+					    <Button
+                                                title="Remove"
+                                                onPress={() => handleRemoveIdea(index)} 
+					    />
+				        </>
+				    )}
                                 </ThemedView>
                             ))
                         ) : (
@@ -204,5 +245,19 @@ const styles = StyleSheet.create({
     },
     ideaInput: {
         width: 500
-    }
+    },
+    imageBox: {
+        borderWidth: 1,
+        borderColor: '#ccc',
+        padding: 10,
+        borderRadius: 8,
+        backgroundColor: '#f0f0f0',
+        alignItems: 'center',
+        marginBottom: 10,
+    },
+    imagePreview: {
+        width: 200,
+        height: 200,
+        borderRadius: 8,
+    },
 });
