@@ -254,6 +254,13 @@ export default function Index() {
           style={styles.logo}
         />
         <ThemedText type="title" style={styles.title}>Welcome to CreativeBlock</ThemedText>
+
+
+        <TouchableOpacity style={styles.secondaryButton} onPress={ router.navigate('/musicviewpage')}>
+                  <ThemedText style={styles.secondaryButtonText}>Head To music Page</ThemedText>
+                </TouchableOpacity>
+
+
       </ThemedView>
       
       <ThemedView style={styles.formContainer}>

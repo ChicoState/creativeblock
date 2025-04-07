@@ -146,6 +146,7 @@ export default function ProjectHome() {
                 <ThemedText type="title">Project Home</ThemedText>
                 {currentUser ? (
                     <ThemedText>Signed in as: {currentUser}</ThemedText>
+                    
                 ) : (
                     <ThemedText>Guest Mode</ThemedText>
                 )}
