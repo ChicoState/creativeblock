@@ -62,7 +62,7 @@ export default function ProjectView() {
 
         try {
             const projectIdeas = updatedIdeas.map(idea => ({
-                title: idea.getTitle(),
+                title: idea.title,
                 modules: idea.getModules(),
             }));
 
@@ -129,7 +129,7 @@ export default function ProjectView() {
                                     style={styles.ideaItem}
                                     onPress={() => handleOpenIdea(item)}
                                 >
-                                    <ThemedText style={styles.ideaTitle}>{item.getTitle()}</ThemedText>
+                                    <ThemedText style={styles.ideaTitle}>{item.title}</ThemedText>
                                     
                                 </TouchableOpacity>
                             )}
@@ -163,12 +163,12 @@ export default function ProjectView() {
                     </Modal>
                     <Modal visible={isIdeaModalVisible} onRequestClose={() => setIsIdeaModalVisible(false)}>
                         <ThemedView style={styles.ideaModal}>
-                            <ThemedText style={styles.ideaTitle}>{currentIdea?.getTitle()}</ThemedText>
+                            <ThemedText style={styles.ideaTitle}>{currentIdea?.title}</ThemedText>
                             <TouchableOpacity style={styles.addButton} onPress={() => console.log("add module.")}>
                                 <ThemedText style={styles.addButtonText}>[+]New Module</ThemedText>
                             </TouchableOpacity>
                             <FlatList
-                                data={currentIdea?.getModules()}
+                                data={currentIdea?.modules}
                                 keyExtractor={(item, index) => index.toString()}
                                 renderItem={({ item }) => (
                                     item.getView()

@@ -1,202 +1,147 @@
+// Firebase Firestore-powered Project Home
 import React, { useState, useEffect } from 'react';
 import { StyleSheet, TouchableOpacity, FlatList, Alert } from "react-native";
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import { useRouter, useFocusEffect } from 'expo-router';
-import { Project } from '@/classes/Project';
+import { useRouter } from 'expo-router';
+import { auth, db } from './firebase';
+import { collection, getDocs } from 'firebase/firestore';
+import { onSnapshot } from 'firebase/firestore';
+import { signOut } from 'firebase/auth';
+import { deleteDoc, doc } from 'firebase/firestore';
+import { Feather } from '@expo/vector-icons'; // for clean minimalist icons
+
+interface Project {
+    id: string;
+    title: string;
+    created?: any;
+    lastEdited?: any;
+}
 
 export default function ProjectHome() {
     const [projects, setProjects] = useState<Project[]>([]);
     const [loading, setLoading] = useState(true);
-    const [currentUser, setCurrentUser] = useState<string | null>(null);
     const router = useRouter();
 
-    // Load user and projects on component mount
-    useFocusEffect(() => {
-        const loadData = async () => {
-            try {
-                // Get current user
-                const user = await AsyncStorage.getItem('currentUser');
-                setCurrentUser(user);
-                
-                // Load projects
-                await loadProjects(user);
-            } catch (error) {
-                console.error('Error loading data:', error);
-            } finally {
+
+    useEffect(() => {
+        const user = auth.currentUser;
+        if (!user) return;
+
+        const unsubscribe = onSnapshot(
+            collection(db, 'users', user.uid, 'projects'),
+            (snapshot) => {
+                const loaded = snapshot.docs.map(doc => ({
+                    id: doc.id,
+                    ...doc.data(),
+                } as Project));
+                setProjects(loaded);
+                setLoading(false);
+            },
+            (error) => {
+                console.error('Error loading projects:', error);
+                Alert.alert('Error', error.message);
                 setLoading(false);
             }
-        };
-        
-        loadData();
-    });
+        );
 
-    // Load projects for current user or guest
-    const loadProjects = async (username: string | null) => {
+        return () => unsubscribe(); // Clean up listener on unmount
+    }, []);
+
+    const handleSignOut = async () => {
         try {
-            // Key for storing projects depends on whether there's a logged-in user
-            const storageKey = username ? `projects_${username}` : 'projects_guest';
-            
-            const projectsJson = await AsyncStorage.getItem(storageKey);
-            if (projectsJson) {
-                const loadedProjects = JSON.parse(projectsJson);
-                setProjects(loadedProjects);
-            } else {
-                setProjects([]);
-            }
-        } catch (error) {
-            console.error('Error loading projects:', error);
-            setProjects([]);
+            await signOut(auth);
+            router.replace('/'); // send them back to login
+        } catch (error: any) {
+            console.error('Error signing out:', error);
+            Alert.alert('Sign Out Error', error.message);
         }
     };
 
-    // Navigate to create project screen
+    const handleDeleteProject = async (projectId: string) => {
+        Alert.alert(
+            'Delete Project',
+            'Are you sure you want to delete this project?',
+            [
+                { text: 'Cancel', style: 'cancel' },
+                {
+                    text: 'Delete',
+                    style: 'destructive',
+                    onPress: async () => {
+                        const user = auth.currentUser;
+                        if (!user) return;
+
+                        try {
+                            await deleteDoc(doc(db, 'users', user.uid, 'projects', projectId));
+                            // Real-time updates via onSnapshot will auto-refresh the list
+                        } catch (error: any) {
+                            console.error('Delete error:', error);
+                            Alert.alert('Error', error.message);
+                        }
+                    },
+                },
+            ]
+        );
+    };
+
+
     const handleCreateProject = () => {
         router.push('/createproject');
     };
 
-    // Open a selected project
-    const handleOpenProject = (project: Project) => {
-        // Save the current project to AsyncStorage
-        const saveCurrentProject = async () => {
-            try {
-                await AsyncStorage.setItem('currentProject', JSON.stringify(project));
-                // Navigate to the project view page with the saved current project.
-                console.log(`Opening project: ${project.title}`);
-                router.push('/projectview');
-            } catch (error) {
-                console.error('Error saving current project:', error);
-                Alert.alert('Error', 'Failed to open project');
-            }
-        };
-        
-        saveCurrentProject();
+    const handleOpenProject = (projectId: string) => {
+        router.push({ pathname: '/projectview', params: { id: projectId } });
     };
 
-    // Sign out (for logged-in users)
-    const handleSignOut = async () => {
-        try {
-            await AsyncStorage.removeItem('currentUser');
-            router.replace('/');
-        } catch (error) {
-            console.error('Error signing out:', error);
-        }
-    };
-
-    // Render loading state
     if (loading) {
         return (
-            <ThemedView style={styles.centerContainer}>
-                <ThemedText>Loading projects...</ThemedText>
-            </ThemedView>
-        );
-    }
-
-    // Render empty state
-    if (projects.length === 0) {
-        return (
             <ThemedView style={styles.container}>
-                <ThemedView style={styles.header}>
-                    <ThemedText type="title">Project Home</ThemedText>
-                    {currentUser ? (
-                        <ThemedText>Signed in as: {currentUser}</ThemedText>
-                    ) : (
-                        <ThemedText>Guest Mode</ThemedText>
-                    )}
-                </ThemedView>
-                
-                <ThemedView style={styles.emptyContainer}>
-                    <ThemedText style={styles.emptyText}>No projects found</ThemedText>
-                    <ThemedText style={styles.emptySubtext}>Create a new project to get started</ThemedText>
-                    
-                    <TouchableOpacity 
-                        style={styles.createButton} 
-                        onPress={handleCreateProject}
-                    >
-                        <ThemedText style={styles.buttonText}>Create New Project</ThemedText>
-                    </TouchableOpacity>
-                </ThemedView>
-                
-                <ThemedView style={styles.footer}>
-                    {currentUser ? (
-                        <TouchableOpacity 
-                            style={styles.signOutButton} 
-                            onPress={handleSignOut}
-                        >
-                            <ThemedText style={styles.signOutText}>Sign Out</ThemedText>
-                        </TouchableOpacity>
-                    ) : (
-                        <TouchableOpacity 
-                            style={styles.signOutButton} 
-                            onPress={() => router.replace('/')}
-                        >
-                            <ThemedText style={styles.signOutText}>Back to Login</ThemedText>
-                        </TouchableOpacity>
-                    )}
-                </ThemedView>
+                <ThemedText>Loading...</ThemedText>
             </ThemedView>
         );
     }
 
-    // Render projects list
     return (
         <ThemedView style={styles.container}>
-            <ThemedView style={styles.header}>
-                <ThemedText type="title">Project Home</ThemedText>
-                {currentUser ? (
-                    <ThemedText>Signed in as: {currentUser}</ThemedText>
-                ) : (
-                    <ThemedText>Guest Mode</ThemedText>
-                )}
-            </ThemedView>
-            
-            <ThemedView style={styles.projectsContainer}>
-                <ThemedText style={styles.sectionTitle}>Your Projects</ThemedText>
-                
-                <FlatList
-                    data={projects}
-                    keyExtractor={(item, index) => index.toString()}
-                    renderItem={({ item }) => (
-                        <TouchableOpacity 
-                            style={styles.projectItem}
-                            onPress={() => handleOpenProject(item)}
-                        >
+            <ThemedText type="title" style={styles.title}>Your Projects</ThemedText>
+
+            <FlatList
+                data={projects}
+                keyExtractor={(item) => item.id}
+                renderItem={({ item }) => (
+                    <ThemedView style={styles.projectRow}>
+                        <TouchableOpacity onPress={() => handleOpenProject(item.id)} style={styles.projectInfo}>
                             <ThemedText style={styles.projectTitle}>{item.title}</ThemedText>
-                            <ThemedText style={styles.projectDate}>
-                                Last edited: {new Date(item.lastEdited).toLocaleDateString()}
-                            </ThemedText>
+                            {item.lastEdited && (
+                                <ThemedText style={styles.projectDate}>
+                                    Last edited: {new Date(item.lastEdited.toDate?.() || item.lastEdited).toLocaleDateString()}
+                                </ThemedText>
+                            )}
                         </TouchableOpacity>
-                    )}
-                />
-                
-                <TouchableOpacity 
-                    style={styles.createButton}
-                    onPress={handleCreateProject}
-                >
-                    <ThemedText style={styles.buttonText}>Create New Project</ThemedText>
-                </TouchableOpacity>
-            </ThemedView>
-            
-            <ThemedView style={styles.footer}>
-                {currentUser ? (
-                    <TouchableOpacity 
-                        style={styles.signOutButton}
-                        onPress={handleSignOut}
-                    >
-                        <ThemedText style={styles.signOutText}>Sign Out</ThemedText>
-                    </TouchableOpacity>
-                ) : (
-                    <TouchableOpacity 
-                        style={styles.signOutButton}
-                        onPress={() => router.replace('/')}
-                    >
-                        <ThemedText style={styles.signOutText}>Back to Login</ThemedText>
-                    </TouchableOpacity>
+
+                        <TouchableOpacity onPress={() => handleDeleteProject(item.id)}>
+                            <Feather name="trash-2" size={20} color="#ff4d4d" />
+                        </TouchableOpacity>
+                    </ThemedView>
+
+
                 )}
-            </ThemedView>
+                ListEmptyComponent={<ThemedText>No projects yet. Create one below!</ThemedText>}
+            />
+
+            <TouchableOpacity style={styles.createButton} onPress={handleCreateProject}>
+                <ThemedText style={styles.buttonText}>Create New Project</ThemedText>
+            </TouchableOpacity>
+
+            <TouchableOpacity style={styles.signOutButton} onPress={handleSignOut}>
+                <ThemedText style={styles.signOutText}>Sign Out</ThemedText>
+            </TouchableOpacity>
+
+
         </ThemedView>
     );
+
+
 }
 
 const styles = StyleSheet.create({
@@ -204,34 +149,8 @@ const styles = StyleSheet.create({
         flex: 1,
         padding: 20,
     },
-    centerContainer: {
-        flex: 1,
-        justifyContent: 'center',
-        alignItems: 'center',
-    },
-    header: {
-        marginBottom: 24,
-    },
-    emptyContainer: {
-        flex: 1,
-        justifyContent: 'center',
-        alignItems: 'center',
-    },
-    emptyText: {
-        fontSize: 18,
-        fontWeight: 'bold',
-        marginBottom: 8,
-    },
-    emptySubtext: {
-        fontSize: 16,
-        marginBottom: 24,
-        textAlign: 'center',
-    },
-    projectsContainer: {
-        flex: 1,
-    },
-    sectionTitle: {
-        fontSize: 18,
+    title: {
+        fontSize: 24,
         fontWeight: 'bold',
         marginBottom: 16,
     },
@@ -243,13 +162,12 @@ const styles = StyleSheet.create({
         marginBottom: 12,
     },
     projectTitle: {
-        fontSize: 16,
+        fontSize: 18,
         fontWeight: 'bold',
-        marginBottom: 4,
     },
     projectDate: {
         fontSize: 14,
-        color: '#666',
+        color: '#777',
     },
     createButton: {
         backgroundColor: '#4A90E2',
@@ -263,18 +181,49 @@ const styles = StyleSheet.create({
         fontWeight: 'bold',
         fontSize: 16,
     },
-    footer: {
-        marginTop: 16,
-        paddingTop: 16,
-        borderTopWidth: 1,
-        borderTopColor: '#eee',
-    },
+
     signOutButton: {
+        marginTop: 24,
         padding: 12,
+        backgroundColor: '#ff4d4d',
+        borderRadius: 8,
         alignItems: 'center',
     },
     signOutText: {
-        color: '#4A90E2',
+        color: '#fff',
+        fontWeight: 'bold',
         fontSize: 16,
-    }
+    },
+
+    deleteText: {
+        color: '#fff',
+        fontWeight: 'bold',
+
+    },
+
+    deleteButton: {
+        marginTop: 8,
+        backgroundColor: '#ff4d4d',
+        padding: 8,
+        borderRadius: 6,
+        alignItems: 'center',
+    },
+
+    projectRow: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        padding: 16,
+        borderWidth: 1,
+        borderColor: '#ccc',
+        borderRadius: 8,
+        marginBottom: 12,
+    },
+    projectInfo: {
+        flex: 1,
+        marginRight: 12,
+    },
+
+
+
 });
