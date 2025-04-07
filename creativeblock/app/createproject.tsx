@@ -1,98 +1,62 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { StyleSheet, Button, Alert } from "react-native";
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
 import { ThemedTextInput } from '@/components/ThemedTextInput';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import { useRouter } from 'expo-router';
-import { Project } from '@/classes/Project';
+import { useNavigation } from '@react-navigation/native';
+import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
+import { auth, db } from './firebase'; // Adjust the import path as needed
 
 export default function CreateProject() {
-    const [nameText, setNameText] = useState('');
-    const [currentUser, setCurrentUser] = useState<string | null>(null);
-    const router = useRouter();
+    const [nameText, onChangeNameText] = React.useState('');
+    const navigation = useNavigation();
 
-    // Load current user on component mount
-    useEffect(() => {
-        const loadUser = async () => {
-            try {
-                const user = await AsyncStorage.getItem('currentUser');
-                setCurrentUser(user);
-            } catch (error) {
-                console.error('Error loading user:', error);
-            }
-        };
+    const handleCreate = async () => {
+        const user = auth.currentUser;
 
-        loadUser();
-    }, []);
+        if (!user) {
+            Alert.alert("Error", "You must be signed in to create a project.");
+            return;
+        }
 
-    const handleCreateProject = async () => {
         if (!nameText.trim()) {
-            Alert.alert('Error', 'Please enter a project title');
+            Alert.alert("Error", "Project title cannot be empty.");
             return;
         }
 
         try {
-            // Create new project
             const newProject = {
                 title: nameText.trim(),
-                created: new Date().toISOString(),
-                lastEdited: new Date().toISOString(),
-                // Add other project properties as needed
+                created: serverTimestamp(),
+                lastEdited: serverTimestamp(),
+                ideas: [] // Optional: pre-fill empty ideas array
             };
 
-            // Key for storing projects depends on whether there's a logged-in user
-            const storageKey = currentUser ? `projects_${currentUser}` : 'projects_guest';
+            await addDoc(collection(db, 'users', user.uid, 'projects'), newProject);
 
-            // Get existing projects
-            const projectsJson = await AsyncStorage.getItem(storageKey);
-            let projects = projectsJson ? JSON.parse(projectsJson) : [];
-
-            // Add new project
-            projects.push(newProject);
-
-            // Save updated projects list
-            await AsyncStorage.setItem(storageKey, JSON.stringify(projects));
-
-            // Set as current project
-            await AsyncStorage.setItem('currentProject', JSON.stringify(newProject));
-
-            // Navigate back to project home
-            router.back();
-
-            // You could navigate to the project editor instead
-            // router.navigate('projecteditor' as never);
-        } catch (error) {
-            console.error('Error creating project:', error);
-            Alert.alert('Error', 'Failed to create project');
+            console.log("Created project:", nameText);
+            navigation.goBack(); // Go back to projecthome
+            navigation.navigate('projecthome' as never);
+        } catch (error: any) {
+            console.error("Failed to save project:", error);
+            Alert.alert("Error", error.message);
         }
     };
 
     return (
-        <ThemedView
-            style={{
-                flex: 1,
-                justifyContent: "center",
-                alignItems: "stretch",
-                padding: 20,
-            }}
-        >
+        <ThemedView style={{ flex: 1, justifyContent: "center", alignItems: "stretch" }}>
             <ThemedView style={styles.titleContainer}>
                 <ThemedText type="title">Create New Project</ThemedText>
             </ThemedView>
 
             <ThemedTextInput
                 placeholder="Project Title"
-                onChangeText={setNameText}
+                onChangeText={onChangeNameText}
                 value={nameText}
-                style={styles.input}
             />
 
             <ThemedView style={styles.bottomContainer}>
-                <Button
-                    title="Create"
-                    onPress={handleCreateProject}
-                />
+                <Button title="Create" onPress={handleCreate} />
             </ThemedView>
         </ThemedView>
     );
@@ -103,13 +67,6 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         alignItems: 'center',
         gap: 8,
-        marginBottom: 24,
-    },
-    input: {
-        marginBottom: 16,
-        borderWidth: 1,
-        borderRadius: 8,
-        padding: 12,
     },
     bottomContainer: {
         flex: 1,

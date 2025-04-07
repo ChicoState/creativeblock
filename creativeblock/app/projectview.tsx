@@ -4,93 +4,96 @@ import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
 import { ThemedTextInput } from '@/components/ThemedTextInput'
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { useRouter } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Project } from '@/classes/Project';
 import { Idea } from '@/classes/Idea';
+import { auth, db } from './firebase';
+import { doc, getDoc, updateDoc } from 'firebase/firestore';
 
-export default function ProjectHome() {
+export default function ProjectView() {
     const [nameText, setNameText] = useState(''); // Title for new idea.
-    const [project, setProject] = useState<Project | null>(null); // Get/Set for the currently loaded project.
+    const [project, setProject] = useState<any>(null); // Get/Set for the currently loaded project.
     const [currentUser, setCurrentUser] = useState<string | null>(null); // Get/Set for current user.
     const [isCreateModalVisible, setIsCreateModalVisible] = useState(false); // Visibility for the Add Idea modal.
     const [isIdeaModalVisible, setIsIdeaModalVisible] = useState(false); // Visibility for the Edit Idea modal.
     const [currentIdea, setCurrentIdea] = useState<Idea | null>(null); // Currently selected Idea.
     const router = useRouter();
+    const [ideas, setIdeas] = useState<Idea[]>([]);
+    const [loading, setLoading] = useState(true);
+    const { id: projectId } = useLocalSearchParams();
+
 
     // Load the project on component mount.
     useEffect(() => {
-        const loadCurrentProject = async () => {
-            try {
-                const projectJson = await AsyncStorage.getItem('currentProject');
-                if (projectJson) {
-                    const projectData = JSON.parse(projectJson);
-                    const project = new Project(projectData.title);
+        const fetchProject = async () => {
+            const user = auth.currentUser;
+            if (!user || typeof projectId !== 'string') return;
 
-                    // If this project has ideas, add them.
-                    if (projectData.ideas && Array.isArray(projectData.ideas)) {
-                        projectData.ideas.forEach((idea: any) => {
-                            project.addIdea(new Idea(idea.title));
-                        });
-                    }
-                    console.log("Project " + project.getTitle() + " loaded with " + project.getIdeas().length + " ideas!");
-                    setProject(project);
+            try {
+                const projectDoc = await getDoc(doc(db, 'users', user.uid, 'projects', projectId));
+                const projectData = projectDoc.data();
+                if (projectData) {
+                    setProject(projectData);
+                    const projectIdeas = projectData.ideas
+                        ? projectData.ideas.map((ideaData: any) => { 
+                            // Handle properly stored Idea objects
+                            const idea = new Idea(ideaData.title);
+                            // Add any additional Idea properties here
+                            // idea.modules = ideaData.modules.map(...) if needed
+                            return idea;
+                        })
+                        : [];
+                    setIdeas(projectIdeas);
                 }
             } catch (error) {
-                console.error('Error loading current project:', error);
+                console.error('Failed to load project:', error);
+                Alert.alert('Error', 'Failed to load project');
+            } finally {
+                setLoading(false);
             }
         };
 
-        loadCurrentProject();
-    }, []);
+        fetchProject();
+    }, [projectId]);
 
-    // Listen to changes in project and save accordingly.
-    useEffect(() => {
-        if (project) {
-            console.log("Update project");
-            saveCurrentProject();
-        }
-    }, [project]); 
-
-    const saveCurrentProject = async () => {
-        if (!project) {
-            console.error('Attempted to save null project');
-            Alert.alert('Error', 'Cannot save null project.');
-            return;
-        }
+    const saveProject = async (updatedIdeas: Idea[]) => {
+        const user = auth.currentUser;
+        if (!user || typeof projectId !== 'string') return;
 
         try {
-            await AsyncStorage.setItem('currentProject', JSON.stringify(project.toJSON()));
+            const projectIdeas = updatedIdeas.map(idea => ({
+                title: idea.getTitle(),
+                modules: idea.getModules(),
+            }));
 
-            const user = await AsyncStorage.getItem('currentUser');
-            const storageKey = user ? `projects_${user}` : 'projects_guest';
-
-            // Get project from saved projects.
-            const projectsJson = await AsyncStorage.getItem(storageKey);
-            let projects: Project[] = projectsJson ? JSON.parse(projectsJson) : [];
-            const projectIndex = projects.findIndex((p) => p.title === project.title);
-
-            // Update project and add it back to projects.
-            projects[projectIndex] = project.toJSON(); // Use toJSON() here as well
-            await AsyncStorage.setItem(storageKey, JSON.stringify(projects));
-
-            console.log('Project saved successfully!');
+            await updateDoc(doc(db, 'users', user.uid, 'projects', projectId), {
+                ...project,
+                ideas: projectIdeas,
+                lastEdited: new Date().toISOString()
+            });
         } catch (error) {
-            console.error('Error saving project:', error);
-            Alert.alert('Error', 'Failed to save project. Please try again.');
+            console.error('Failed to save project:', error);
         }
     };
 
-    // Adds a new blank idea to the project.
     const handleAddIdea = (title: string) => {
-        if (!project) return; // Do nothing if null.
+        const newIdea = new Idea(title); 
+        const updated = [...ideas, newIdea];
+        setIdeas(updated);
+        saveProject(updated);
+    };
 
-        // Add all project ideas, then add new idea and save.
-        const updatedProject = new Project(project.getTitle());
-        for (const idea of project.getIdeas()) {
-            updatedProject.addIdea(new Idea(idea.getTitle()));
-        }
-        updatedProject.addIdea(new Idea(title));
-        setProject(updatedProject);
+    const updateIdea = (index: number, idea: Idea) => {
+        const updated = [...ideas];
+        updated[index] = idea;
+        setIdeas(updated);
+        saveProject(updated);
+    };
+
+    const handleRemoveIdea = (index: number) => {
+        const updated = ideas.filter((_, i) => i !== index);
+        setIdeas(updated);
+        saveProject(updated);
     };
 
     // Open a selected idea
@@ -161,7 +164,7 @@ export default function ProjectHome() {
                     <Modal visible={isIdeaModalVisible} onRequestClose={() => setIsIdeaModalVisible(false)}>
                         <ThemedView style={styles.ideaModal}>
                             <ThemedText style={styles.ideaTitle}>{currentIdea?.getTitle()}</ThemedText>
-                            <TouchableOpacity style={styles.addButton} onPress={() => }>
+                            <TouchableOpacity style={styles.addButton} onPress={() => console.log("add module.")}>
                                 <ThemedText style={styles.addButtonText}>[+]New Module</ThemedText>
                             </TouchableOpacity>
                             <FlatList
