@@ -105,8 +105,8 @@ export default function ProjectView() {
             <ThemedTextInput
               style={styles.ideaInput}
               placeholder="Enter idea..."
-              defaultValue={item}
-              onEndEditing={(event) => updateIdea(index, event.nativeEvent.text)}
+              value={item}
+              onChangeText={(text) => updateIdea(index, text)}
             />
             <Button title="Remove" onPress={() => handleRemoveIdea(index)} />
           </ThemedView>
@@ -122,7 +122,10 @@ const styles = StyleSheet.create({
     padding: 20,
   },
   header: {
-    marginBottom: 24,
+    flexDirection: 'row',
+  justifyContent: 'space-between',
+  alignItems: 'center',
+  marginBottom: 24,
   },
   addButton: {
     backgroundColor: '#4A90E2',
