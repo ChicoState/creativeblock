@@ -3,8 +3,9 @@ import { IdeaModule } from '@/classes/IdeaModule';
 export class Idea {
     private title: string; // A brief summary of the idea.
     private modules: IdeaModule[] = [];
-    constructor(title: string) { // Constructor for the Idea class.
+    constructor(title: string, modules?: IdeaModule[]) { // Constructor for the Idea class.
         this.title = title;
+        if (modules) this.modules = modules;
     }
 
     public getTitle(): string { // Getter for title.

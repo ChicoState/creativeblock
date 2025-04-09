@@ -12,11 +12,10 @@ import { IdeaTextModule } from '../classes/IdeaTextModule';
 
 export default function ProjectView() {
     const [nameText, setNameText] = useState(''); // Title for new idea.
-    const [project, setProject] = useState<any>(null); // Get/Set for the currently loaded project.
+    const [project, setProject] = useState<Project>(new Project("")); // Get/Set for the currently loaded project.
     const [isCreateModalVisible, setIsCreateModalVisible] = useState(false); // Visibility for the Add Idea modal.
     const [isIdeaModalVisible, setIsIdeaModalVisible] = useState(false); // Visibility for the Edit Idea modal.
-    const [currentIdea, setCurrentIdea] = useState<Idea>(); // Currently selected Idea.
-    const [currentIdeaIndex, setCurrentIdeaIndex] = useState<number>()
+    const [currentIdea, setCurrentIdea] = useState<Idea>(new Idea("")); // Currently selected Idea.
     const router = useRouter();
     const [ideas, setIdeas] = useState<Idea[]>([]);
     const [loading, setLoading] = useState(true);
@@ -30,16 +29,21 @@ export default function ProjectView() {
             if (!user || typeof projectId !== 'string') return;
 
             try {
+                // Take data and plug it into constructor.
                 const projectDoc = await getDoc(doc(db, 'users', user.uid, 'projects', projectId));
                 const projectData = projectDoc.data();
                 if (projectData) {
-                    setProject(projectData);
-                    const projectIdeas = projectData.ideas
-                        ? projectData.ideas.map((ideaData: any) => { 
-                            const idea = new Idea(ideaData.title);
+                    setProject(new Project(projectData.title, projectData.ideas));
+                    /*const projectIdeas = projectData.ideas
+                        ? projectData.ideas.map((ideaData: Idea) => { 
+                            const idea = new Idea(ideaData.title, ideaData.modules);
                             return idea;
                         })
-                        : [];
+                        : [];*/
+                    const projectIdeas: Idea[] = []
+                    projectData.ideas.forEach((item: any) => {
+                        projectIdeas.push(new Idea(item.title, item.modules));
+                    });
                     setIdeas(projectIdeas);
                 }
             } catch (error) {
@@ -80,9 +84,10 @@ export default function ProjectView() {
         saveProject(updated);
     };
 
-    const updateIdea = (index: number, idea: Idea) => {
+    const updateIdea = (idea: Idea) => {
         const updated = [...ideas];
-        updated[index] = idea;
+        const updateIndex: number = updated.findIndex(element => element.getTitle() === idea.getTitle());
+        updated[updateIndex] = idea;
         setIdeas(updated);
         saveProject(updated);
     };
@@ -94,11 +99,9 @@ export default function ProjectView() {
     };
 
     // Open a selected idea
-    const handleOpenIdea = (index: number) => {
-        setCurrentIdea(project.getIdeas()[index]);
-        setCurrentIdeaIndex(index);
+    const handleOpenIdea = (idea: Idea) => {
+        setCurrentIdea(idea);
         if (currentIdea) setIsIdeaModalVisible(true);
-        
     };
 
     return (
@@ -107,22 +110,22 @@ export default function ProjectView() {
                 // Load this page if project is not null.
                 <ThemedView>
                     <ThemedView style={styles.header}>
-                        <ThemedText type="title">{project.title}</ThemedText>
+                        <ThemedText type="title">{project.getTitle()}</ThemedText>
                         <TouchableOpacity style={styles.addButton} onPress={() => setIsCreateModalVisible(true)}>
                             <ThemedText style={styles.addButtonText}>[+]New Idea</ThemedText>
                         </TouchableOpacity>
                     </ThemedView>
-                    {project.ideas && Array.isArray(project.ideas) && project.ideas.length > 0 ? (
+                    {project.getIdeas() && Array.isArray(project.getIdeas()) && project.getIdeas().length > 0 ? (
                         // Displays a list of ideas.
                         <FlatList 
-                            data={project.ideas}
+                            data={ideas}
                             keyExtractor={(item, index) => index.toString()}
-                            renderItem={({ item, index }) => (
+                            renderItem={({ item }) => (
                                 <TouchableOpacity
                                     style={styles.ideaItem}
-                                    onPress={() => handleOpenIdea(index)}
+                                    onPress={() => handleOpenIdea(item)}
                                 >
-                                    <ThemedText style={styles.ideaTitle}>{item.title}</ThemedText>
+                                    <ThemedText style={styles.ideaTitle}>{item.getTitle()}</ThemedText>
                                     
                                 </TouchableOpacity>
                             )}
@@ -156,7 +159,7 @@ export default function ProjectView() {
                     </Modal>
                     <Modal visible={isIdeaModalVisible} onRequestClose={() => setIsIdeaModalVisible(false)}>
                         <ThemedView style={styles.ideaModal}>
-                            <ThemedText style={styles.ideaTitle}>{currentIdea?.title}</ThemedText>
+                            <ThemedText style={styles.ideaTitle}>{currentIdea?.getTitle()}</ThemedText>
                             <TouchableOpacity style={styles.addButton} onPress={() => {
                                 currentIdea?.addModule(new IdeaTextModule(""));
                                 updateIdea(currentIdea)
@@ -164,7 +167,7 @@ export default function ProjectView() {
                                 <ThemedText style={styles.addButtonText}>[+]New Module</ThemedText>
                             </TouchableOpacity>
                             <FlatList
-                                data={currentIdea?.modules}
+                                data={currentIdea?.getModules()}
                                 keyExtractor={(item, index) => index.toString()}
                                 renderItem={({ item }) => (
                                     item.getView()

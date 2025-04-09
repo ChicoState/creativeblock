@@ -5,8 +5,9 @@ export class Project {
     private title: string; // Name of the project.
     private ideas: Idea[] = []; // Array of ideas.
 
-    constructor(title: string) { // Constructor for the Project class.
+    constructor(title: string, ideas?: Idea[]) { // Constructor for the Project class.
         this.title = title;
+        if (ideas) this.ideas = ideas;
     }
     public getTitle(): string { // Getter for title.
         return this.title;
