@@ -3,20 +3,20 @@ import { StyleSheet, TouchableOpacity, Modal, FlatList, Alert, Button, Switch } 
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
 import { ThemedTextInput } from '@/components/ThemedTextInput'
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Project } from '@/classes/Project';
 import { Idea } from '@/classes/Idea';
 import { auth, db } from './firebase';
 import { doc, getDoc, updateDoc } from 'firebase/firestore';
+import { IdeaTextModule } from '../classes/IdeaTextModule';
 
 export default function ProjectView() {
     const [nameText, setNameText] = useState(''); // Title for new idea.
     const [project, setProject] = useState<any>(null); // Get/Set for the currently loaded project.
-    const [currentUser, setCurrentUser] = useState<string | null>(null); // Get/Set for current user.
     const [isCreateModalVisible, setIsCreateModalVisible] = useState(false); // Visibility for the Add Idea modal.
     const [isIdeaModalVisible, setIsIdeaModalVisible] = useState(false); // Visibility for the Edit Idea modal.
-    const [currentIdea, setCurrentIdea] = useState<Idea | null>(null); // Currently selected Idea.
+    const [currentIdea, setCurrentIdea] = useState<Idea>(); // Currently selected Idea.
+    const [currentIdeaIndex, setCurrentIdeaIndex] = useState<number>()
     const router = useRouter();
     const [ideas, setIdeas] = useState<Idea[]>([]);
     const [loading, setLoading] = useState(true);
@@ -36,10 +36,7 @@ export default function ProjectView() {
                     setProject(projectData);
                     const projectIdeas = projectData.ideas
                         ? projectData.ideas.map((ideaData: any) => { 
-                            // Handle properly stored Idea objects
                             const idea = new Idea(ideaData.title);
-                            // Add any additional Idea properties here
-                            // idea.modules = ideaData.modules.map(...) if needed
                             return idea;
                         })
                         : [];
@@ -62,7 +59,7 @@ export default function ProjectView() {
 
         try {
             const projectIdeas = updatedIdeas.map(idea => ({
-                title: idea.title,
+                title: idea.getTitle(),
                 modules: idea.getModules(),
             }));
 
@@ -97,9 +94,10 @@ export default function ProjectView() {
     };
 
     // Open a selected idea
-    const handleOpenIdea = (idea: Idea) => {
-        setCurrentIdea(idea);
-        if (idea) setIsIdeaModalVisible(true);
+    const handleOpenIdea = (index: number) => {
+        setCurrentIdea(project.getIdeas()[index]);
+        setCurrentIdeaIndex(index);
+        if (currentIdea) setIsIdeaModalVisible(true);
         
     };
 
@@ -110,11 +108,6 @@ export default function ProjectView() {
                 <ThemedView>
                     <ThemedView style={styles.header}>
                         <ThemedText type="title">{project.title}</ThemedText>
-                        {currentUser ? (
-                            <ThemedText>Signed in as: {currentUser}</ThemedText>
-                        ) : (
-                            <ThemedText>Guest Mode</ThemedText>
-                        )}
                         <TouchableOpacity style={styles.addButton} onPress={() => setIsCreateModalVisible(true)}>
                             <ThemedText style={styles.addButtonText}>[+]New Idea</ThemedText>
                         </TouchableOpacity>
@@ -124,10 +117,10 @@ export default function ProjectView() {
                         <FlatList 
                             data={project.ideas}
                             keyExtractor={(item, index) => index.toString()}
-                            renderItem={({ item }) => (
+                            renderItem={({ item, index }) => (
                                 <TouchableOpacity
                                     style={styles.ideaItem}
-                                    onPress={() => handleOpenIdea(item)}
+                                    onPress={() => handleOpenIdea(index)}
                                 >
                                     <ThemedText style={styles.ideaTitle}>{item.title}</ThemedText>
                                     
@@ -164,7 +157,10 @@ export default function ProjectView() {
                     <Modal visible={isIdeaModalVisible} onRequestClose={() => setIsIdeaModalVisible(false)}>
                         <ThemedView style={styles.ideaModal}>
                             <ThemedText style={styles.ideaTitle}>{currentIdea?.title}</ThemedText>
-                            <TouchableOpacity style={styles.addButton} onPress={() => console.log("add module.")}>
+                            <TouchableOpacity style={styles.addButton} onPress={() => {
+                                currentIdea?.addModule(new IdeaTextModule(""));
+                                updateIdea(currentIdea)
+                            }}>
                                 <ThemedText style={styles.addButtonText}>[+]New Module</ThemedText>
                             </TouchableOpacity>
                             <FlatList

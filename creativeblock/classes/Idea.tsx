@@ -19,7 +19,7 @@ export class Idea {
         return this.modules;
     }
 
-    public addModules (module: IdeaModule) {
+    public addModule (module: IdeaModule) {
         this.modules.push(module);
     }
 
