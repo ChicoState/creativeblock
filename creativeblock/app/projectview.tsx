@@ -8,7 +8,9 @@ import { Project } from '@/classes/Project';
 import { Idea } from '@/classes/Idea';
 import { auth, db } from './firebase';
 import { doc, getDoc, updateDoc } from 'firebase/firestore';
+import {IdeaModule } from '../classes/IdeaModule'
 import { IdeaTextModule } from '../classes/IdeaTextModule';
+import { IdeaImageModule } from '../classes/IdeaImageModule'
 
 export default function ProjectView() {
     const [nameText, setNameText] = useState(''); // Title for new idea.
@@ -34,15 +36,16 @@ export default function ProjectView() {
                 const projectData = projectDoc.data();
                 if (projectData) {
                     setProject(new Project(projectData.title, projectData.ideas));
-                    /*const projectIdeas = projectData.ideas
-                        ? projectData.ideas.map((ideaData: Idea) => { 
-                            const idea = new Idea(ideaData.title, ideaData.modules);
-                            return idea;
-                        })
-                        : [];*/
+
+                    // Load all ideas.
                     const projectIdeas: Idea[] = []
                     projectData.ideas.forEach((item: any) => {
-                        projectIdeas.push(new Idea(item.title, item.modules));
+                        const ideaModules: IdeaModule[] = [];
+                        item.modules.forEach((item: any) => {
+                            if (item.text != null) ideaModules.push(new IdeaTextModule(item.text));
+                            if (item.image != null) ideaModules.push(new IdeaImageModule(item.image));
+                        })
+                        projectIdeas.push(new Idea(item.title, ideaModules));
                     });
                     setIdeas(projectIdeas);
                 }
@@ -64,7 +67,11 @@ export default function ProjectView() {
         try {
             const projectIdeas = updatedIdeas.map(idea => ({
                 title: idea.getTitle(),
-                modules: idea.getModules(),
+
+                modules: idea.getModules().map(module => ({
+                    text: (module instanceof IdeaTextModule) ? module.getText() : null,
+                    image: (module instanceof IdeaImageModule) ? module.getImage() : null,
+                })),
             }));
 
             await updateDoc(doc(db, 'users', user.uid, 'projects', projectId), {

@@ -6,4 +6,8 @@ export class IdeaImageModule extends IdeaModule {
         super();
         this.image = image;
     }
+
+    public getImage(): string {
+        return this.image;
+    }
 }

@@ -7,13 +7,19 @@ export class IdeaTextModule extends IdeaModule {
     constructor(text: string) { 
         super();
         this.text = text;
+    } 
+
+    public getText(): string {
+        return this.text;
     }
 
     public getView(): JSX.Element { // Returns a view for this module which will be shown in the idea view.
         let initialText: string = this.text;
         return (
             <ThemedView>
-                <ThemedTextInput defaultValue = {initialText}>
+                <ThemedTextInput defaultValue={initialText} onChangeText={(text) => {
+                    this.text = text; 
+                }}>
                 
                 </ThemedTextInput>
             </ThemedView>
