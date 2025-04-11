@@ -13,13 +13,13 @@ export class IdeaTextModule extends IdeaModule {
         return this.text;
     }
 
-    public getView(): JSX.Element { // Returns a view for this module which will be shown in the idea view.
+    public getView(onSave: () => void): JSX.Element { // Returns a view for this module which will be shown in the idea view.
         let initialText: string = this.text;
         return (
             <ThemedView>
                 <ThemedTextInput defaultValue={initialText} onChangeText={(text) => {
-                    this.text = text; 
-                }}>
+                    this.text = text;
+                }} onEndEditing={() => onSave() }>
                 
                 </ThemedTextInput>
             </ThemedView>

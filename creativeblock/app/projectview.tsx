@@ -177,7 +177,7 @@ export default function ProjectView() {
                                 data={currentIdea?.getModules()}
                                 keyExtractor={(item, index) => index.toString()}
                                 renderItem={({ item }) => (
-                                    item.getView()
+                                    item.getView(() => saveProject(ideas))
                                 )}
                             />
                         </ThemedView>
