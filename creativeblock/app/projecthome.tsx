@@ -25,7 +25,7 @@ export default function ProjectHome() {
     const [loading, setLoading] = useState(true);
     const router = useRouter();
 
-    const [category_filter, set_category_filter] = useState("Music")
+    const [category_filter, set_category_filter] = useState("All")
     const data = [
         { label: 'All', value: 'All' },
         { label: 'Music', value: 'Music' },

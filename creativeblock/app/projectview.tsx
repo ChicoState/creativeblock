@@ -10,7 +10,7 @@ import { auth, db } from './firebase';
 import { doc, getDoc, updateDoc } from 'firebase/firestore';
 import {IdeaModule } from '../classes/IdeaModule'
 import { IdeaTextModule } from '../classes/IdeaTextModule';
-//import { IdeaImageModule } from '../classes/IdeaImageModule'
+import { IdeaImageModule } from '../classes/IdeaImageModule'
 
 export default function ProjectView() {
     const [nameText, setNameText] = useState(''); // Title for new idea.
@@ -43,7 +43,7 @@ export default function ProjectView() {
                         const ideaModules: IdeaModule[] = [];
                         item.modules.forEach((item: any) => {
                             if (item.text != null) ideaModules.push(new IdeaTextModule(item.text));
-                            //if (item.image != null) ideaModules.push(new IdeaImageModule(item.image));
+                            if (item.image != null) ideaModules.push(new IdeaImageModule(item.image));
                         })
                         projectIdeas.push(new Idea(item.title, ideaModules));
                     });
@@ -67,11 +67,14 @@ export default function ProjectView() {
         try {
             const projectIdeas = updatedIdeas.map(idea => ({
                 title: idea.getTitle(),
+
                 modules: idea.getModules().map(module => ({
                     text: (module instanceof IdeaTextModule) ? module.getText() : null,
-                    //image: (module instanceof IdeaImageModule) ? module.getImage() : null,
+                    image: (module instanceof IdeaImageModule) ? module.getImage() : null,
                 })),
             }));
+            
+            
 
             await updateDoc(doc(db, 'users', user.uid, 'projects', projectId), {
                 ...project,
@@ -118,10 +121,10 @@ export default function ProjectView() {
                     <ThemedView style={styles.header}>
                         <ThemedText type="title">{project.getTitle()}</ThemedText>
                         <TouchableOpacity style={styles.addButton} onPress={() => setIsCreateModalVisible(true)}>
-                            <ThemedText style={styles.addButtonText}>[+]New Idea</ThemedText>
+                            <ThemedText style={styles.addButtonText}>[+]</ThemedText>
                         </TouchableOpacity>
                     </ThemedView>
-                    {project.getIdeas() && Array.isArray(project.getIdeas()) && project.getIdeas().length > 0 ? (
+                    {ideas.length > 0 ? (
                         // Displays a list of ideas.
                         <FlatList 
                             data={ideas}
@@ -167,7 +170,7 @@ export default function ProjectView() {
                         <ThemedView style={styles.ideaModal}>
                             <ThemedText style={styles.ideaTitle}>{currentIdea?.getTitle()}</ThemedText>
                             <TouchableOpacity style={styles.addButton} onPress={() => {
-                                currentIdea?.addModule(new IdeaTextModule(""));
+                                currentIdea?.addModule(new IdeaImageModule(""));
                                 updateIdea(currentIdea)
                             }}>
                                 <ThemedText style={styles.addButtonText}>[+]New Module</ThemedText>
@@ -176,7 +179,7 @@ export default function ProjectView() {
                                 data={currentIdea?.getModules()}
                                 keyExtractor={(item, index) => index.toString()}
                                 renderItem={({ item }) => (
-                                    item.getView(() => saveProject(ideas))
+                                    item.getView(() => updateIdea(currentIdea))
                                 )}
                             />
                         </ThemedView>
@@ -200,14 +203,14 @@ const styles = StyleSheet.create({
     },
     addButton: {
         backgroundColor: '#4A90E2',
-        width: 145,
+        width: 50,
         height: 40,
         borderRadius: 5,
         justifyContent: 'center',
         alignItems: 'center',
         position: 'absolute',
-        right: 20,
-        top: 10
+        right: 0,
+        top: -5
     },
     addButtonText: {
         fontSize: 24,
