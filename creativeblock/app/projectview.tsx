@@ -10,7 +10,7 @@ import { auth, db } from './firebase';
 import { doc, getDoc, updateDoc } from 'firebase/firestore';
 import {IdeaModule } from '../classes/IdeaModule'
 import { IdeaTextModule } from '../classes/IdeaTextModule';
-import { IdeaImageModule } from '../classes/IdeaImageModule'
+//import { IdeaImageModule } from '../classes/IdeaImageModule'
 
 export default function ProjectView() {
     const [nameText, setNameText] = useState(''); // Title for new idea.
@@ -43,7 +43,7 @@ export default function ProjectView() {
                         const ideaModules: IdeaModule[] = [];
                         item.modules.forEach((item: any) => {
                             if (item.text != null) ideaModules.push(new IdeaTextModule(item.text));
-                            if (item.image != null) ideaModules.push(new IdeaImageModule(item.image));
+                            //if (item.image != null) ideaModules.push(new IdeaImageModule(item.image));
                         })
                         projectIdeas.push(new Idea(item.title, ideaModules));
                     });
@@ -67,10 +67,9 @@ export default function ProjectView() {
         try {
             const projectIdeas = updatedIdeas.map(idea => ({
                 title: idea.getTitle(),
-
                 modules: idea.getModules().map(module => ({
                     text: (module instanceof IdeaTextModule) ? module.getText() : null,
-                    image: (module instanceof IdeaImageModule) ? module.getImage() : null,
+                    //image: (module instanceof IdeaImageModule) ? module.getImage() : null,
                 })),
             }));
 

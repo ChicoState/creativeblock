@@ -10,6 +10,8 @@ import { onSnapshot } from 'firebase/firestore';
 import { signOut } from 'firebase/auth';
 import { deleteDoc, doc } from 'firebase/firestore';
 import { Feather } from '@expo/vector-icons'; // for clean minimalist icons
+import { Dropdown } from 'react-native-element-dropdown';
+import AntDesign from '@expo/vector-icons/AntDesign';
 
 interface Project {
     id: string;
@@ -22,6 +24,15 @@ export default function ProjectHome() {
     const [projects, setProjects] = useState<Project[]>([]);
     const [loading, setLoading] = useState(true);
     const router = useRouter();
+
+    const [category_filter, set_category_filter] = useState("Music")
+    const data = [
+        { label: 'All', value: 'All' },
+        { label: 'Music', value: 'Music' },
+        { label: 'Art', value: 'Art' },
+        { label: 'Software', value: 'Software' },
+        { label: 'Writing', value: 'Writing' },
+    ];
 
 
     useEffect(() => {
@@ -105,8 +116,35 @@ export default function ProjectHome() {
         <ThemedView style={styles.container}>
             <ThemedText type="title" style={styles.title}>Your Projects</ThemedText>
 
+            <ThemedView>
+                <Dropdown
+                    style={styles.dropdown}
+                    placeholderStyle={styles.placeholderStyle}
+                    selectedTextStyle={styles.selectedTextStyle}
+                    inputSearchStyle={styles.inputSearchStyle}
+                    iconStyle={styles.iconStyle}
+                    data={data}
+                    search
+                    maxHeight={300}
+                    labelField="label"
+                    valueField="value"
+                    placeholder="Select item"
+                    searchPlaceholder="Search..."
+                    onChange={item => {
+                        set_category_filter(item.value);
+                    }}
+                    renderLeftIcon={() => (
+                        <AntDesign style={styles.icon} color="white" name="Safety" size={20} />
+                    )}
+                />
+            </ThemedView>
+
             <FlatList
-                data={projects}
+                data={
+                    category_filter === "All"
+                        ? projects
+                        : projects.filter(item => item.category === category_filter)
+                }
                 keyExtractor={(item) => item.id}
                 renderItem={({ item }) => (
                     <ThemedView style={styles.projectRow}>
@@ -223,7 +261,30 @@ const styles = StyleSheet.create({
         flex: 1,
         marginRight: 12,
     },
-
-
-
+    dropdown: {
+        margin: 16,
+        height: 50,
+        borderBottomColor: 'light gray',
+        borderBottomWidth: 0.5,
+        color: "white",
+    },
+    icon: {
+        marginRight: 5,
+    },
+    placeholderStyle: {
+        color: "white",
+        fontSize: 16,
+    },
+    selectedTextStyle: {
+        color: "white",
+        fontSize: 16,
+    },
+    iconStyle: {
+        width: 20,
+        height: 20,
+    },
+    inputSearchStyle: {
+        height: 40,
+        fontSize: 16,
+    },
 });
