@@ -169,17 +169,31 @@ export default function ProjectView() {
                     <Modal visible={isIdeaModalVisible} onRequestClose={() => setIsIdeaModalVisible(false)}>
                         <ThemedView style={styles.ideaModal}>
                             <ThemedText style={styles.ideaTitle}>{currentIdea?.getTitle()}</ThemedText>
-                            <TouchableOpacity style={styles.addButton} onPress={() => {
+                            <TouchableOpacity onPress={() => {
+                                currentIdea?.addModule(new IdeaTextModule(""));
+                                updateIdea(currentIdea)
+                            }}>
+                                <ThemedText style={styles.addButtonText}>[+]New Text Module</ThemedText>
+                            </TouchableOpacity>
+                            <TouchableOpacity onPress={() => {
                                 currentIdea?.addModule(new IdeaImageModule(""));
                                 updateIdea(currentIdea)
                             }}>
-                                <ThemedText style={styles.addButtonText}>[+]New Module</ThemedText>
+                                <ThemedText style={styles.addButtonText}>[+]New Image Module</ThemedText>
                             </TouchableOpacity>
                             <FlatList
                                 data={currentIdea?.getModules()}
                                 keyExtractor={(item, index) => index.toString()}
-                                renderItem={({ item }) => (
-                                    item.getView(() => updateIdea(currentIdea))
+                                renderItem={({ item, index }) => (
+                                    <ThemedView style={{ marginBottom: 10 }}>
+                                        {item.getView(() => updateIdea(currentIdea))}
+                                        <TouchableOpacity
+                                            style={{ marginTop: 5, padding: 10, backgroundColor: 'red', alignItems: 'flex-start' }}
+                                            onPress={() => { currentIdea.removeModule(index); updateIdea(currentIdea); } } // define this function
+                                        >
+                                            <ThemedText>Remove</ThemedText>
+                                        </TouchableOpacity>
+                                    </ThemedView>
                                 )}
                             />
                         </ThemedView>
@@ -210,7 +224,7 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         position: 'absolute',
         right: 0,
-        top: -5
+        top: 0
     },
     addButtonText: {
         fontSize: 24,

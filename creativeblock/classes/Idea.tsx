@@ -24,6 +24,11 @@ export class Idea {
         this.modules.push(module);
     }
 
+    public removeModule(index: number) {
+        const updated = this.modules.filter((_, i) => i !== index);
+        this.modules = updated;
+    }
+
 
     public toJSON() { // Serialize to JSON
         return {
