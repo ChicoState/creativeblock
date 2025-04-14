@@ -1,0 +1,195 @@
+Index: app/index.tsx
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP
+<+>import React, { useState, useEffect } from 'react';\nimport { StyleSheet, TouchableOpacity, Alert, Image } from \"react-native\";\nimport { ThemedText } from '@/components/ThemedText';\nimport { ThemedView } from '@/components/ThemedView';\nimport { ThemedTextInput } from '@/components/ThemedTextInput';\nimport { useRouter } from 'expo-router';\nimport AsyncStorage from '@react-native-async-storage/async-storage';\n\n// Screen states\nconst SCREENS = {\n  WELCOME: 'welcome',\n  CREATE_ACCOUNT: 'createAccount',\n  FORGOT_PASSWORD: 'forgotPassword'\n};\n\n// User data structure\ninterface User {\n  username: string;\n  password: string;\n  email: string;\n}\n\nexport default function Index() {\n  // Screen management\n  const [currentScreen, setCurrentScreen] = useState(SCREENS.WELCOME);\n  \n  // Login screen state\n  const [username, setUsername] = useState('');\n  const [password, setPassword] = useState('');\n  \n  // Create account screen state\n  const [newUsername, setNewUsername] = useState('');\n  const [email, setEmail] = useState('');\n  const [newPassword, setNewPassword] = useState('');\n  const [confirmPassword, setConfirmPassword] = useState('');\n  \n  // Forgot password screen state\n  const [resetEmail, setResetEmail] = useState('');\n  \n  // User management\n  const [isLoading, setIsLoading] = useState(true);\n  const [currentUser, setCurrentUser] = useState<string | null>(null);\n  \n  const router = useRouter();\n  \n  // Check for logged in user on mount\n  useEffect(() => {\n    checkLoggedInUser();\n  }, []);\n  \n  // Check if a user is already logged in\n  const checkLoggedInUser = async () => {\n    try {\n      const user = await AsyncStorage.getItem('currentUser');\n      if (user) {\n        setCurrentUser(user);\n        // Auto navigate to project home if user is logged in\n        router.push('/projecthome');\n      }\n      setIsLoading(false);\n    } catch (error) {\n      console.error('Error checking logged in user:', error);\n      setIsLoading(false);\n    }\n  };\n  \n  // Navigation functions\n  const goToWelcome = () => setCurrentScreen(SCREENS.WELCOME);\n  const goToCreateAccount = () => setCurrentScreen(SCREENS.CREATE_ACCOUNT);\n  const goToForgotPassword = () => setCurrentScreen(SCREENS.FORGOT_PASSWORD);\n  \n  // User storage functions\n  const saveUser = async (user: User) => {\n    try {\n      // Get existing users or initialize empty array\n      const usersJson = await AsyncStorage.getItem('users');\n      let users: User[] = usersJson ? JSON.parse(usersJson) : [];\n      \n      // Check if username already exists\n      if (users.some(u => u.username === user.username)) {\n        return false;\n      }\n      \n      // Add new user and save\n      users.push(user);\n      await AsyncStorage.setItem('users', JSON.stringify(users));\n      return true;\n    } catch (error) {\n      console.error('Error saving user:', error);\n      return false;\n    }\n  };\n  \n  const getUserByUsername = async (username: string) => {\n    try {\n      const usersJson = await AsyncStorage.getItem('users');\n      if (!usersJson) return null;\n      \n      const users: User[] = JSON.parse(usersJson);\n      return users.find(u => u.username === username) || null;\n    } catch (error) {\n      console.error('Error getting user:', error);\n      return null;\n    }\n  };\n  \n  const getUserByEmail = async (email: string) => {\n    try {\n      const usersJson = await AsyncStorage.getItem('users');\n      if (!usersJson) return null;\n      \n      const users: User[] = JSON.parse(usersJson);\n      return users.find(u => u.email === email) || null;\n    } catch (error) {\n      console.error('Error getting user by email:', error);\n      return null;\n    }\n  };\n  \n  const updateUserPassword = async (email: string, newPassword: string) => {\n    try {\n      const usersJson = await AsyncStorage.getItem('users');\n      if (!usersJson) return false;\n      \n      let users: User[] = JSON.parse(usersJson);\n      const userIndex = users.findIndex(u => u.email === email);\n      \n      if (userIndex === -1) return false;\n      \n      users[userIndex].password = newPassword;\n      await AsyncStorage.setItem('users', JSON.stringify(users));\n      return true;\n    } catch (error) {\n      console.error('Error updating password:', error);\n      return false;\n    }\n  };\n  \n  const setLoggedInUser = async (username: string) => {\n    try {\n      await AsyncStorage.setItem('currentUser', username);\n      setCurrentUser(username);\n    } catch (error) {\n      console.error('Error setting logged in user:', error);\n    }\n  };\n  \n  const logoutUser = async () => {\n    try {\n      await AsyncStorage.removeItem('currentUser');\n      setCurrentUser(null);\n    } catch (error) {\n      console.error('Error logging out user:', error);\n    }\n  };\n  \n  // Action handlers\n  const handleLogin = async () => {\n    if (!username || !password) {\n      Alert.alert('Error', 'Please enter both username and password');\n      return;\n    }\n    \n    const user = await getUserByUsername(username);\n    if (!user) {\n      Alert.alert('Error', 'User not found');\n      return;\n    }\n    \n    if (user.password !== password) {\n      Alert.alert('Error', 'Invalid password');\n      return;\n    }\n    \n    // Login successful\n    await setLoggedInUser(username);\n    router.push('/projecthome');\n  };\n  \n  const handleGuestLogin = () => {\n    // Guest login doesn't set a current user\n    router.push('/projecthome');\n  };\n  \n  const handleCreateAccount = async () => {\n    if (!newUsername || !email || !newPassword) {\n      Alert.alert('Error', 'Please fill all required fields');\n      return;\n    }\n    \n    if (newPassword !== confirmPassword) {\n      Alert.alert('Error', 'Passwords do not match');\n      return;\n    }\n    \n    // Create new user\n    const newUser: User = {\n      username: newUsername,\n      password: newPassword,\n      email: email\n    };\n    \n    const success = await saveUser(newUser);\n    if (success) {\n      Alert.alert('Success', 'Account created successfully!', [\n        { text: 'OK', onPress: goToWelcome }\n      ]);\n      \n      // Clear form fields\n      setNewUsername('');\n      setEmail('');\n      setNewPassword('');\n      setConfirmPassword('');\n    } else {\n      Alert.alert('Error', 'Username already exists');\n    }\n  };\n  \n  const handleResetPassword = async () => {\n    if (!resetEmail) {\n      Alert.alert('Error', 'Please enter your email address');\n      return;\n    }\n    \n    const user = await getUserByEmail(resetEmail);\n    if (!user) {\n      Alert.alert('Error', 'No account found with this email');\n      return;\n    }\n    \n    // In a real app, you would send an email with a reset link\n    // For this demo, we'll just simulate \"resetting\" the password to a default\n    const tempPassword = 'resetpass123';\n    const success = await updateUserPassword(resetEmail, tempPassword);\n    \n    if (success) {\n      Alert.alert(\n        'Success', \n        `Password has been reset to: ${tempPassword}`,\n        [{ text: 'OK', onPress: goToWelcome }]\n      );\n      setResetEmail('');\n    } else {\n      Alert.alert('Error', 'Failed to reset password');\n    }\n  };\n  \n  // Render Welcome/Login Screen\n  const renderWelcomeScreen = () => (\n    <ThemedView style={styles.container}>\n      <ThemedView style={styles.logoContainer}>\n        <Image \n          source={require('@/assets/images/logo.png')} \n          style={styles.logo}\n        />\n        <ThemedText type=\"title\" style={styles.title}>Welcome to CreativeBlock</ThemedText>\n\n\n        <TouchableOpacity style={styles.secondaryButton} onPress={ router.navigate('/musicviewpage')}>\n                  <ThemedText style={styles.secondaryButtonText}>Head To music Page</ThemedText>\n                </TouchableOpacity>\n\n\n      </ThemedView>\n      \n      <ThemedView style={styles.formContainer}>\n        <ThemedTextInput \n          placeholder=\"Username\" \n          value={username} \n          onChangeText={setUsername}\n          style={styles.input}\n        />\n        \n        <ThemedTextInput \n          placeholder=\"Password\" \n          value={password} \n          onChangeText={setPassword}\n          secureTextEntry={true}\n          style={styles.input}\n        />\n        \n        <TouchableOpacity style={styles.primaryButton} onPress={handleLogin}>\n          <ThemedText style={styles.buttonText}>Login</ThemedText>\n        </TouchableOpacity>\n        \n        <ThemedView style={styles.optionsContainer}>\n          <TouchableOpacity onPress={goToCreateAccount}>\n            <ThemedText type=\"link\" style={styles.optionText}>Create Account</ThemedText>\n          </TouchableOpacity>\n          \n          <TouchableOpacity onPress={goToForgotPassword}>\n            <ThemedText type=\"link\" style={styles.optionText}>Forgot Password</ThemedText>\n          </TouchableOpacity>\n        </ThemedView>\n        \n        <TouchableOpacity style={styles.secondaryButton} onPress={handleGuestLogin}>\n          <ThemedText style={styles.secondaryButtonText}>Continue as Guest</ThemedText>\n        </TouchableOpacity>\n      </ThemedView>\n    </ThemedView>\n  );\n  \n  // Render Create Account Screen\n  const renderCreateAccountScreen = () => (\n    <ThemedView style={styles.container}>\n      <ThemedText type=\"title\" style={styles.title}>Create Account</ThemedText>\n      \n      <ThemedView style={styles.formContainer}>\n        <ThemedTextInput \n          placeholder=\"Username\" \n          value={newUsername} \n          onChangeText={setNewUsername}\n          style={styles.input}\n        />\n        \n        <ThemedTextInput \n          placeholder=\"Email\" \n          value={email} \n          onChangeText={setEmail}\n          keyboardType=\"email-address\"\n          style={styles.input}\n        />\n        \n        <ThemedTextInput \n          placeholder=\"Password\" \n          value={newPassword} \n          onChangeText={setNewPassword}\n          secureTextEntry={true}\n          style={styles.input}\n        />\n        \n        <ThemedTextInput \n          placeholder=\"Confirm Password\" \n          value={confirmPassword} \n          onChangeText={setConfirmPassword}\n          secureTextEntry={true}\n          style={styles.input}\n        />\n        \n        <TouchableOpacity style={styles.primaryButton} onPress={handleCreateAccount}>\n          <ThemedText style={styles.buttonText}>Create Account</ThemedText>\n        </TouchableOpacity>\n        \n        <TouchableOpacity style={styles.backButton} onPress={goToWelcome}>\n          <ThemedText style={styles.linkText}>Back to Login</ThemedText>\n        </TouchableOpacity>\n      </ThemedView>\n    </ThemedView>\n  );\n  \n  // Render Forgot Password Screen\n  const renderForgotPasswordScreen = () => (\n    <ThemedView style={styles.container}>\n      <ThemedText type=\"title\" style={styles.title}>Forgot Password</ThemedText>\n      \n      <ThemedText style={styles.description}>\n        Enter your email address and we'll send you instructions to reset your password.\n      </ThemedText>\n      \n      <ThemedView style={styles.formContainer}>\n        <ThemedTextInput \n          placeholder=\"Email\" \n          value={resetEmail} \n          onChangeText={setResetEmail}\n          keyboardType=\"email-address\"\n          style={styles.input}\n        />\n        \n        <TouchableOpacity style={styles.primaryButton} onPress={handleResetPassword}>\n          <ThemedText style={styles.buttonText}>Reset Password</ThemedText>\n        </TouchableOpacity>\n        \n        <TouchableOpacity style={styles.backButton} onPress={goToWelcome}>\n          <ThemedText style={styles.linkText}>Back to Login</ThemedText>\n        </TouchableOpacity>\n      </ThemedView>\n    </ThemedView>\n  );\n  \n  // Show loading screen if still checking for logged in user\n  if (isLoading) {\n    return (\n      <ThemedView style={styles.container}>\n        <ThemedText>Loading...</ThemedText>\n      </ThemedView>\n    );\n  }\n  \n  // Main render function\n  switch (currentScreen) {\n    case SCREENS.CREATE_ACCOUNT:\n      return renderCreateAccountScreen();\n    case SCREENS.FORGOT_PASSWORD:\n      return renderForgotPasswordScreen();\n    case SCREENS.WELCOME:\n    default:\n      return renderWelcomeScreen();\n  }\n}\n\nconst styles = StyleSheet.create({\n  container: {\n    flex: 1,\n    justifyContent: \"center\",\n    alignItems: \"center\",\n    padding: 20,\n  },\n  logoContainer: {\n    alignItems: 'center',\n    marginBottom: 40,\n  },\n  logo: {\n    width: 180,\n    height: 180,\n    marginBottom: 16,\n    resizeMode: 'contain',\n  },\n  title: {\n    fontSize: 28,\n    fontWeight: 'bold',\n    textAlign: 'center',\n    marginBottom: 24,\n  },\n  description: {\n    textAlign: 'center',\n    marginBottom: 24,\n    maxWidth: 350,\n  },\n  formContainer: {\n    width: '100%',\n    maxWidth: 350,\n  },\n  input: {\n    marginBottom: 16,\n    borderWidth: 1,\n    borderRadius: 8,\n    padding: 12,\n  },\n  primaryButton: {\n    backgroundColor: '#4A90E2',\n    borderRadius: 8,\n    padding: 15,\n    alignItems: 'center',\n    marginTop: 8,\n  },\n  buttonText: {\n    color: 'white',\n    fontWeight: 'bold',\n    fontSize: 16,\n  },\n  secondaryButton: {\n    borderWidth: 1,\n    borderColor: '#4A90E2',\n    borderRadius: 8,\n    padding: 15,\n    alignItems: 'center',\n  },\n  secondaryButtonText: {\n    color: '#4A90E2',\n    fontWeight: '500',\n    fontSize: 16,\n  },\n  optionsContainer: {\n    flexDirection: 'row',\n    justifyContent: 'space-between',\n    marginTop: 16,\n    marginBottom: 24,\n  },\n  optionText: {\n    fontSize: 14,\n  },\n  backButton: {\n    marginTop: 16,\n    alignItems: 'center',\n  },\n  linkText: {\n    color: '#4A90E2',\n    fontSize: 16,\n  },\n});
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/app/index.tsx b/app/index.tsx
+--- a/app/index.tsx	(revision 7bff91d7892477cd7f3ca2610618480562fc5d85)
++++ b/app/index.tsx	(date 1744054447646)
+@@ -256,9 +256,9 @@
+         <ThemedText type="title" style={styles.title}>Welcome to CreativeBlock</ThemedText>
+ 
+ 
+-        <TouchableOpacity style={styles.secondaryButton} onPress={ router.navigate('/musicviewpage')}>
+-                  <ThemedText style={styles.secondaryButtonText}>Head To music Page</ThemedText>
+-                </TouchableOpacity>
++     <TouchableOpacity style={styles.secondaryButton} onPress={router.navigate('musicviewpage')}>
++            <ThemedText style={styles.secondaryButtonText}>Head To music Page</ThemedText>
++        </TouchableOpacity>
+ 
+ 
+       </ThemedView>
+Index: app/_layout.tsx
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP
+<+>import { Stack } from 'expo-router';\n\nexport default function RootLayout() {\n    return (\n        <Stack>\n            <Stack.Screen name=\"index\" options={{ title: 'Home' }} />\n            <Stack.Screen name=\"createproject\" options={{ title: 'Create Project' }} />\n            <Stack.Screen name=\"projecthome\" options={{ title: 'Project Home' }} />\n            <Stack.Screen name=\"projectview\" options={{ title: 'Project View' }} />\n            <Stack.Screen name=\"musicviewpage\" options={{ title: 'Music View Page' }} />\n        </Stack>\n    );\n}\n
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/app/_layout.tsx b/app/_layout.tsx
+--- a/app/_layout.tsx	(revision 7bff91d7892477cd7f3ca2610618480562fc5d85)
++++ b/app/_layout.tsx	(date 1744053539038)
+@@ -7,7 +7,7 @@
+             <Stack.Screen name="createproject" options={{ title: 'Create Project' }} />
+             <Stack.Screen name="projecthome" options={{ title: 'Project Home' }} />
+             <Stack.Screen name="projectview" options={{ title: 'Project View' }} />
+-            <Stack.Screen name="musicviewpage" options={{ title: 'Music View Page' }} />
++ <Stack.Screen name="musicviewpage" options={{ title: 'Music View Page' }} />
+         </Stack>
+     );
+ }
+Index: app/musicviewpage.tsx
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP
+<+>import React, { useState, useEffect } from 'react';\nimport { StyleSheet, TouchableOpacity, FlatList, Alert } from \"react-native\";\nimport { useRouter, useFocusEffect } from 'expo-router';\nimport {SheetMusicDisplay} from '@/classes/SheetMusic'\nimport { View } from 'react-native';\nimport VexFlowComponent from '@/components/VexFlowComponent';\nimport { SafeAreaView } from 'react-native';\nimport { WebView } from 'react-native-webview';\n\n    const CheckMusic = ({ navigation }) => {\n      return (\n        <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>\n\n\n          <Text>Details Screen</Text>\n          <Button\n            title=\"Show Music\"\n            onPress={() => SheetMusicDisplay}\n          />\n        </View>\n      );\n    };\n\n\n\n\nconst TryOSMD = () => {\n  return (\n      <SafeAreaView style={{ flex: 1 }}>\n        <WebView\n          originWhitelist={['*']}\n          source={{ html: `\n            <!DOCTYPE html>\n            <html lang=\"en\">\n            <head>\n                <meta charset=\"UTF-8\">\n                <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">\n                <title>OpenSheetMusicDisplay Example</title>\n                <script src=\"https://cdn.jsdelivr.net/npm/opensheetmusicdisplay@0.10.1/build/opensheetmusicdisplay.min.js\"></script>\n            </head>\n            <body>\n                <div id=\"osmd-container\" style=\"width: 100%; height: 100vh;\"></div>\n                <script>\n                    window.onload = function () {\n                        const osmd = new opensheetmusicdisplay.OpenSheetMusicDisplay(\"osmd-container\");\n                        osmd.load(\"https://example.com/path/to/musicxml/file.xml\").then(function() {\n                            osmd.render();\n                        }).catch(function(error) {\n                            console.error(\"Error loading MusicXML:\", error);\n                        });\n                    }\n                </script>\n            </body>\n            </html>\n          ` }}\n        />\n      </SafeAreaView>\n    );\n  };\n\n  const styles = StyleSheet.create({\n    container: {\n      flex: 1,\n    },\n  });\n\n\n    export default TryOSMD;\n\n\n\n\n\n\n\n
+===================================================================
+diff --git a/app/musicviewpage.tsx b/app/musicviewpage.tsx
+--- a/app/musicviewpage.tsx	(revision 7bff91d7892477cd7f3ca2610618480562fc5d85)
++++ b/app/musicviewpage.tsx	(date 1744054892521)
+@@ -1,71 +1,76 @@
+ import React, { useState, useEffect } from 'react';
+ import { StyleSheet, TouchableOpacity, FlatList, Alert } from "react-native";
+ import { useRouter, useFocusEffect } from 'expo-router';
+-import {SheetMusicDisplay} from '@/classes/SheetMusic'
+ import { View } from 'react-native';
+-import VexFlowComponent from '@/components/VexFlowComponent';
+ import { SafeAreaView } from 'react-native';
+ import { WebView } from 'react-native-webview';
++//import {myFile} from '@/assets/Music/MozartPianoSonata.xml';
+ 
+-    const CheckMusic = ({ navigation }) => {
+-      return (
+-        <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
+-
+-
+-          <Text>Details Screen</Text>
+-          <Button
+-            title="Show Music"
+-            onPress={() => SheetMusicDisplay}
+-          />
+-        </View>
+-      );
+-    };
++ const App = () => {
++   return (
++     <View style={styles.container}>
++       <Text style={styles.text}>Hello, world!</Text>
++     </View>
++   );
++ };
+ 
++ const styles = StyleSheet.create({
++   container: {
++     flex: 1,
++     backgroundColor: '#fff',
++     alignItems: 'center',
++     justifyContent: 'center',
++   },
++   text: {
++     fontSize: 20,
++     fontWeight: 'bold',
++   },
++ });
++
+ 
+ 
+ 
+ const TryOSMD = () => {
+   return (
+-      <SafeAreaView style={{ flex: 1 }}>
+-        <WebView
+-          originWhitelist={['*']}
+-          source={{ html: `
+-            <!DOCTYPE html>
+-            <html lang="en">
+-            <head>
+-                <meta charset="UTF-8">
+-                <meta name="viewport" content="width=device-width, initial-scale=1.0">
+-                <title>OpenSheetMusicDisplay Example</title>
+-                <script src="https://cdn.jsdelivr.net/npm/opensheetmusicdisplay@0.10.1/build/opensheetmusicdisplay.min.js"></script>
+-            </head>
+-            <body>
+-                <div id="osmd-container" style="width: 100%; height: 100vh;"></div>
+-                <script>
+-                    window.onload = function () {
+-                        const osmd = new opensheetmusicdisplay.OpenSheetMusicDisplay("osmd-container");
+-                        osmd.load("https://example.com/path/to/musicxml/file.xml").then(function() {
+-                            osmd.render();
+-                        }).catch(function(error) {
+-                            console.error("Error loading MusicXML:", error);
+-                        });
+-                    }
+-                </script>
+-            </body>
+-            </html>
+-          ` }}
+-        />
+-      </SafeAreaView>
+-    );
+-  };
++    <SafeAreaView moreStyle={{ flex: 1 }}>
++      <WebView
++        originWhitelist={['*']}
++        source={{ html: `
++          <!DOCTYPE html>
++          <html lang="en">
++          <head>
++              <meta charset="UTF-8">
++              <meta name="viewport" content="width=device-width, initial-scale=1.0">
++              <title>OpenSheetMusicDisplay Example</title>
++              <script src="https://cdn.jsdelivr.net/npm/opensheetmusicdisplay@0.10.1/build/opensheetmusicdisplay.min.js"></script>
++          </head>
++          <body>
++              <div id="osmd-container" style="width: 100%; height: 100vh;"></div>
++              <script>
++                  window.onload = function () {
++                      const osmd = new opensheetmusicdisplay.OpenSheetMusicDisplay("osmd-container");
++                      osmd.load("https://example.com/path/to/musicxml/file.xml").then(function() {
++                          osmd.render();
++                      }).catch(function(error) {
++                          console.error("Error loading MusicXML:", error);
++                      });
++                  }
++              </script>
++          </body>
++          </html>
++        ` }}
++      />
++    </SafeAreaView>
++  );
++};
+ 
+-  const styles = StyleSheet.create({
+-    container: {
+-      flex: 1,
+-    },
+-  });
++const moreStyles = StyleSheet.create({
++  container: {
++    flex: 1,
++  },
++});
+ 
+-
+-    export default TryOSMD;
++export default App;
+ 
+ 
+ 
+Index: classes/SheetMusic.tsx
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP
+<+> import React, { useEffect, useRef } from 'react';\n import { OpenSheetMusicDisplay } from 'opensheetmusicdisplay';\n import { useRouter } from 'expo-router';\n\n function SheetMusicDisplay() {\n   const osmdContainer = useRef(OpenSheetMusicDisplay);\n\n   useEffect(() => {\n     if (osmdContainer.current) {\n       const osmd = new OpenSheetMusicDisplay(osmdContainer.current);\n       osmd.load(\"@/assets/Music/MozartPianoSonata.xml\")\n         .then(() => {\n           osmd.render();\n         });\n     }\n   }, []);\n\n   return (\n     <div ref={osmdContainer} style={{ width: '100%', height: '500px' }} />\n   );\n }\n\n export default SheetMusicDisplay;
+===================================================================
+diff --git a/classes/SheetMusic.tsx b/classes/SheetMusic.tsx
+--- a/classes/SheetMusic.tsx	(revision 7bff91d7892477cd7f3ca2610618480562fc5d85)
++++ b/classes/SheetMusic.tsx	(date 1744052899663)
+@@ -1,5 +1,5 @@
+  import React, { useEffect, useRef } from 'react';
+- import { OpenSheetMusicDisplay } from 'opensheetmusicdisplay';
++// import { OpenSheetMusicDisplay } from 'opensheetmusicdisplay';
+  import { useRouter } from 'expo-router';
+ 
+  function SheetMusicDisplay() {
