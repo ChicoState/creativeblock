@@ -189,7 +189,7 @@ export default function ProjectView() {
                                         {item.getView(() => updateIdea(currentIdea))}
                                         <TouchableOpacity
                                             style={{ marginTop: 5, padding: 10, backgroundColor: 'red', alignItems: 'flex-start' }}
-                                            onPress={() => { currentIdea.removeModule(index); updateIdea(currentIdea); } } // define this function
+                                            onPress={() => { currentIdea.removeModule(index); updateIdea(currentIdea); } } 
                                         >
                                             <ThemedText>Remove</ThemedText>
                                         </TouchableOpacity>
