@@ -3,11 +3,9 @@ import { IdeaModule } from '@/classes/IdeaModule';
 export class Idea {
     private title: string; // A brief summary of the idea.
     private modules: IdeaModule[] = [];
-    constructor(title: string, comps?: IdeaModule[]) { // Constructor for the Idea class.
+    constructor(title: string, modules?: IdeaModule[]) { // Constructor for the Idea class.
         this.title = title;
-        if (comps) {
-            this.modules = comps;
-        }
+        if (modules) this.modules = modules;
     }
 
     public getTitle(): string { // Getter for title.
@@ -22,8 +20,13 @@ export class Idea {
         return this.modules;
     }
 
-    public addModules (module: IdeaModule) {
+    public addModule (module: IdeaModule) {
         this.modules.push(module);
+    }
+
+    public removeModule(index: number) {
+        const updated = this.modules.filter((_, i) => i !== index);
+        this.modules = updated;
     }
 
 

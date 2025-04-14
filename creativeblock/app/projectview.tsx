@@ -3,101 +3,114 @@ import { StyleSheet, TouchableOpacity, Modal, FlatList, Alert, Button, Switch } 
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
 import { ThemedTextInput } from '@/components/ThemedTextInput'
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import { useRouter } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Project } from '@/classes/Project';
 import { Idea } from '@/classes/Idea';
+import { auth, db } from './firebase';
+import { doc, getDoc, updateDoc } from 'firebase/firestore';
+import {IdeaModule } from '../classes/IdeaModule'
+import { IdeaTextModule } from '../classes/IdeaTextModule';
+import { IdeaImageModule } from '../classes/IdeaImageModule'
 
-export default function ProjectHome() {
+export default function ProjectView() {
     const [nameText, setNameText] = useState(''); // Title for new idea.
-    const [project, setProject] = useState<Project | null>(null); // Get/Set for the currently loaded project.
-    const [currentUser, setCurrentUser] = useState<string | null>(null); // Get/Set for current user.
+    const [project, setProject] = useState<Project>(new Project("")); // Get/Set for the currently loaded project.
     const [isCreateModalVisible, setIsCreateModalVisible] = useState(false); // Visibility for the Add Idea modal.
     const [isIdeaModalVisible, setIsIdeaModalVisible] = useState(false); // Visibility for the Edit Idea modal.
-    const [currentIdea, setCurrentIdea] = useState<Idea | null>(null); // Currently selected Idea.
+    const [currentIdea, setCurrentIdea] = useState<Idea>(new Idea("")); // Currently selected Idea.
     const router = useRouter();
+    const [ideas, setIdeas] = useState<Idea[]>([]);
+    const [loading, setLoading] = useState(true);
+    const { id: projectId } = useLocalSearchParams();
+
 
     // Load the project on component mount.
     useEffect(() => {
-        const loadCurrentProject = async () => {
-            try {
-                const projectJson = await AsyncStorage.getItem('currentProject');
-                if (projectJson) {
-                    const projectData = JSON.parse(projectJson);
-                    const project = new Project(projectData.title);
+        const fetchProject = async () => {
+            const user = auth.currentUser;
+            if (!user || typeof projectId !== 'string') return;
 
-                    // If this project has ideas, add them.
-                    if (projectData.ideas && Array.isArray(projectData.ideas)) {
-                        projectData.ideas.forEach((idea: any) => {
-                            project.addIdea(new Idea(idea.title));
-                        });
-                    }
-                    console.log("Project " + project.getTitle() + " loaded with " + project.getIdeas().length + " ideas!");
-                    setProject(project);
+            try {
+                // Take data and plug it into constructor.
+                const projectDoc = await getDoc(doc(db, 'users', user.uid, 'projects', projectId));
+                const projectData = projectDoc.data();
+                if (projectData) {
+                    setProject(new Project(projectData.title, projectData.ideas));
+
+                    // Load all ideas.
+                    const projectIdeas: Idea[] = []
+                    projectData.ideas.forEach((item: any) => {
+                        const ideaModules: IdeaModule[] = [];
+                        item.modules.forEach((item: any) => {
+                            if (item.text != null) ideaModules.push(new IdeaTextModule(item.text));
+                            if (item.image != null) ideaModules.push(new IdeaImageModule(item.image));
+                        })
+                        projectIdeas.push(new Idea(item.title, ideaModules));
+                    });
+                    setIdeas(projectIdeas);
                 }
             } catch (error) {
-                console.error('Error loading current project:', error);
+                console.error('Failed to load project:', error);
+                Alert.alert('Error', 'Failed to load project');
+            } finally {
+                setLoading(false);
             }
         };
 
-        loadCurrentProject();
-    }, []);
+        fetchProject();
+    }, [projectId]);
 
-    // Listen to changes in project and save accordingly.
-    useEffect(() => {
-        if (project) {
-            console.log("Update project");
-            saveCurrentProject();
-        }
-    }, [project]); 
-
-    const saveCurrentProject = async () => {
-        if (!project) {
-            console.error('Attempted to save null project');
-            Alert.alert('Error', 'Cannot save null project.');
-            return;
-        }
+    const saveProject = async (updatedIdeas: Idea[]) => {
+        const user = auth.currentUser;
+        if (!user || typeof projectId !== 'string') return;
 
         try {
-            await AsyncStorage.setItem('currentProject', JSON.stringify(project.toJSON()));
+            const projectIdeas = updatedIdeas.map(idea => ({
+                title: idea.getTitle(),
 
-            const user = await AsyncStorage.getItem('currentUser');
-            const storageKey = user ? `projects_${user}` : 'projects_guest';
+                modules: idea.getModules().map(module => ({
+                    text: (module instanceof IdeaTextModule) ? module.getText() : null,
+                    image: (module instanceof IdeaImageModule) ? module.getImage() : null,
+                })),
+            }));
+            
+            
 
-            // Get project from saved projects.
-            const projectsJson = await AsyncStorage.getItem(storageKey);
-            let projects: Project[] = projectsJson ? JSON.parse(projectsJson) : [];
-            const projectIndex = projects.findIndex((p) => p.title === project.title);
-
-            // Update project and add it back to projects.
-            projects[projectIndex] = project.toJSON(); // Use toJSON() here as well
-            await AsyncStorage.setItem(storageKey, JSON.stringify(projects));
-
-            console.log('Project saved successfully!');
+            await updateDoc(doc(db, 'users', user.uid, 'projects', projectId), {
+                ...project,
+                ideas: projectIdeas,
+                lastEdited: new Date().toISOString()
+            });
         } catch (error) {
-            console.error('Error saving project:', error);
-            Alert.alert('Error', 'Failed to save project. Please try again.');
+            console.error('Failed to save project:', error);
         }
     };
 
-    // Adds a new blank idea to the project.
     const handleAddIdea = (title: string) => {
-        if (!project) return; // Do nothing if null.
+        const newIdea = new Idea(title); 
+        const updated = [...ideas, newIdea];
+        setIdeas(updated);
+        saveProject(updated);
+    };
 
-        // Add all project ideas, then add new idea and save.
-        const updatedProject = new Project(project.getTitle());
-        for (const idea of project.getIdeas()) {
-            updatedProject.addIdea(new Idea(idea.getTitle()));
-        }
-        updatedProject.addIdea(new Idea(title));
-        setProject(updatedProject);
+    const updateIdea = (idea: Idea) => {
+        const updated = [...ideas];
+        const updateIndex: number = updated.findIndex(element => element.getTitle() === idea.getTitle());
+        updated[updateIndex] = idea;
+        setIdeas(updated);
+        saveProject(updated);
+    };
+
+    const handleRemoveIdea = (index: number) => {
+        const updated = ideas.filter((_, i) => i !== index);
+        setIdeas(updated);
+        saveProject(updated);
     };
 
     // Open a selected idea
     const handleOpenIdea = (idea: Idea) => {
         setCurrentIdea(idea);
-        if (idea) setIsIdeaModalVisible(true);
-        
+        if (currentIdea) setIsIdeaModalVisible(true);
     };
 
     return (
@@ -106,20 +119,15 @@ export default function ProjectHome() {
                 // Load this page if project is not null.
                 <ThemedView>
                     <ThemedView style={styles.header}>
-                        <ThemedText type="title">{project.title}</ThemedText>
-                        {currentUser ? (
-                            <ThemedText>Signed in as: {currentUser}</ThemedText>
-                        ) : (
-                            <ThemedText>Guest Mode</ThemedText>
-                        )}
+                        <ThemedText type="title">{project.getTitle()}</ThemedText>
                         <TouchableOpacity style={styles.addButton} onPress={() => setIsCreateModalVisible(true)}>
-                            <ThemedText style={styles.addButtonText}>[+]New Idea</ThemedText>
+                            <ThemedText style={styles.addButtonText}>[+]</ThemedText>
                         </TouchableOpacity>
                     </ThemedView>
-                    {project.ideas && Array.isArray(project.ideas) && project.ideas.length > 0 ? (
+                    {ideas.length > 0 ? (
                         // Displays a list of ideas.
                         <FlatList 
-                            data={project.ideas}
+                            data={ideas}
                             keyExtractor={(item, index) => index.toString()}
                             renderItem={({ item }) => (
                                 <TouchableOpacity
@@ -161,14 +169,31 @@ export default function ProjectHome() {
                     <Modal visible={isIdeaModalVisible} onRequestClose={() => setIsIdeaModalVisible(false)}>
                         <ThemedView style={styles.ideaModal}>
                             <ThemedText style={styles.ideaTitle}>{currentIdea?.getTitle()}</ThemedText>
-                            <TouchableOpacity style={styles.addButton} onPress={() => }>
-                                <ThemedText style={styles.addButtonText}>[+]New Module</ThemedText>
+                            <TouchableOpacity onPress={() => {
+                                currentIdea?.addModule(new IdeaTextModule(""));
+                                updateIdea(currentIdea)
+                            }}>
+                                <ThemedText style={styles.addButtonText}>[+]New Text Module</ThemedText>
+                            </TouchableOpacity>
+                            <TouchableOpacity onPress={() => {
+                                currentIdea?.addModule(new IdeaImageModule(""));
+                                updateIdea(currentIdea)
+                            }}>
+                                <ThemedText style={styles.addButtonText}>[+]New Image Module</ThemedText>
                             </TouchableOpacity>
                             <FlatList
                                 data={currentIdea?.getModules()}
                                 keyExtractor={(item, index) => index.toString()}
-                                renderItem={({ item }) => (
-                                    item.getView()
+                                renderItem={({ item, index }) => (
+                                    <ThemedView style={{ marginBottom: 10 }}>
+                                        {item.getView(() => updateIdea(currentIdea))}
+                                        <TouchableOpacity
+                                            style={{ marginTop: 5, padding: 10, backgroundColor: 'red', alignItems: 'flex-start' }}
+                                            onPress={() => { currentIdea.removeModule(index); updateIdea(currentIdea); } } // define this function
+                                        >
+                                            <ThemedText>Remove</ThemedText>
+                                        </TouchableOpacity>
+                                    </ThemedView>
                                 )}
                             />
                         </ThemedView>
@@ -192,14 +217,14 @@ const styles = StyleSheet.create({
     },
     addButton: {
         backgroundColor: '#4A90E2',
-        width: 145,
+        width: 50,
         height: 40,
         borderRadius: 5,
         justifyContent: 'center',
         alignItems: 'center',
         position: 'absolute',
-        right: 20,
-        top: 10
+        right: 0,
+        top: 0
     },
     addButtonText: {
         fontSize: 24,
