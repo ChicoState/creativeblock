@@ -1,6 +1,7 @@
 // Firebase Firestore-powered Project Home
 import React, { useState, useEffect } from 'react';
-import { StyleSheet, TouchableOpacity, FlatList, Alert } from "react-native";
+import { StyleSheet, TouchableOpacity, FlatList, Alert, Text, } from "react-native";
+// import { StyleSheet, Text, View } from 'react-native';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
 import { useRouter } from 'expo-router';
@@ -26,6 +27,8 @@ export default function ProjectHome() {
   const [loading, setLoading] = useState(true);
   const router = useRouter();
   
+  const [isFocus, setIsFocus] = useState(false);
+  const [value, setValue] = useState(null);
   const [category_filter, set_category_filter] = useState("Music")
   const data = [
     { label: 'All', value: 'All' },
@@ -34,6 +37,17 @@ export default function ProjectHome() {
     { label: 'Software', value: 'Software' },
     { label: 'Writing', value: 'Writing' },
   ];
+
+  const renderLabel = () => {
+    if (value || isFocus) {
+      return (
+        <Text style={[styles.label, isFocus && { color: '#4A90E2' }]}>
+          Select filter
+        </Text>
+      );
+    }
+    return null;
+  };
 
 
 useEffect(() => {
@@ -116,31 +130,42 @@ const handleDeleteProject = async (projectId: string) => {
   
 
   return (
+    
     <ThemedView style={styles.container}>
       <ThemedText type="title" style={styles.title}>Your Projects</ThemedText>
 
       <ThemedView>
+            {renderLabel()}
             <Dropdown
-                style={styles.dropdown}
-                placeholderStyle={styles.placeholderStyle}
-                selectedTextStyle={styles.selectedTextStyle}
-                inputSearchStyle={styles.inputSearchStyle}
-                iconStyle={styles.iconStyle}
-                data={data}
-                search
-                maxHeight={300}
-                labelField="label"
-                valueField="value"
-                placeholder="Select item"
-                searchPlaceholder="Search..."
-                onChange={item => {
-                    set_category_filter(item.value);
-                }}
-                renderLeftIcon={() => (
-                <AntDesign style={styles.icon} color="white" name="Safety" size={20} />
-                )}
+              style={[styles.dropdown, isFocus && { borderColor: '#4A90E2' }]}
+              placeholderStyle={styles.placeholderStyle}
+              selectedTextStyle={styles.selectedTextStyle}
+              inputSearchStyle={styles.inputSearchStyle}
+              iconStyle={styles.iconStyle}
+              data={data}
+              search
+              maxHeight={300}
+              labelField="label"
+              valueField="value"
+              placeholder={!isFocus ? 'Select filter' : '...'}
+              searchPlaceholder="Search..."
+              value={value}
+              onFocus={() => setIsFocus(true)}
+              onBlur={() => setIsFocus(false)}
+              onChange={item => {
+                setValue(item.value);
+                setIsFocus(false);
+              }}
+              renderLeftIcon={() => (
+                <AntDesign
+                  style={styles.icon}
+                  color={isFocus ? '#4A90E2' : 'white'}
+                  name="Safety"
+                  size={20}
+                />
+              )}
             />
-            </ThemedView>
+        </ThemedView>
 
       <FlatList
         data={
@@ -265,32 +290,40 @@ const styles = StyleSheet.create({
     marginRight: 12,
   },
   dropdown: {
-      margin: 16,
-      height: 50,
-      borderBottomColor: 'light gray',
-      borderBottomWidth: 0.5,
-      color: "white",
-    },
-    icon: {
-      marginRight: 5,
-    },
-    placeholderStyle: {
-      color: "white",
-      fontSize: 16,
-    },
-    selectedTextStyle: {
-      color: "white",
-      fontSize: 16,
-    },
-    iconStyle: {
-      width: 20,
-      height: 20,
-    },
-    inputSearchStyle: {
-      height: 40,
-      fontSize: 16,
-    },
-  
-  
-  
+    height: 50,
+    borderColor: 'gray',
+    borderWidth: 1,
+    borderRadius: 8,
+    paddingHorizontal: 8,
+  },
+  icon: {
+    marginRight: 5,
+  },
+  label: {
+    position: 'relative',
+    // backgroundColor: 'black',
+    color: "white",
+    left: 0,
+    top: 0,
+    zIndex: 999,
+    paddingHorizontal: 8,
+    fontSize: 11,
+  },
+  placeholderStyle: {
+    color: "white",
+    fontSize: 16,
+  },
+  selectedTextStyle: {
+    color: "white",
+    fontSize: 16,
+  },
+  iconStyle: {
+    color: "white",
+    width: 20,
+    height: 20,
+  },
+  inputSearchStyle: {
+    height: 40,
+    fontSize: 16,
+  },
 });
