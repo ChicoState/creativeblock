@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import { StyleSheet, TouchableOpacity, Alert, Image } from "react-native";
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
@@ -320,6 +320,8 @@ export default function Index() {
           onChangeText={setNewPassword}
           secureTextEntry={true}
           style={styles.input}
+          returnKeyType="done"
+          onSubmitEditing={handleLogin}
         />
         
         <ThemedTextInput 
