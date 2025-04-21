@@ -1,5 +1,5 @@
 import React from 'react';
-import { StyleSheet, Button, Alert } from "react-native";
+import { StyleSheet, Button, Alert, Text } from "react-native";
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
 import { ThemedTextInput } from '@/components/ThemedTextInput';
@@ -13,7 +13,9 @@ export default function CreateProject() {
     const [nameText, onChangeNameText] = React.useState('');
     const navigation = useNavigation();
 
-    const [category, setcategory] = React.useState("Music");
+    const [isFocus, setIsFocus] = React.useState(false);
+    const [value, setValue] = React.useState(null);
+    const [category_filter, set_category_filter] = React.useState("All")
     const data = [
         { label: 'All', value: 'All' },
         { label: 'Music', value: 'Music' },
@@ -21,6 +23,17 @@ export default function CreateProject() {
         { label: 'Software', value: 'Software' },
         { label: 'Writing', value: 'Writing' },
     ];
+
+    const renderLabel = () => {
+          if (value || isFocus) {
+            return (
+              <Text style={[styles.label, isFocus && { color: '#4A90E2' }]}>
+                Select Category
+              </Text>
+            );
+          }
+          return null;
+        };
 
     const handleCreate = async () => {
         const user = auth.currentUser;
@@ -41,7 +54,7 @@ export default function CreateProject() {
                 created: serverTimestamp(),
                 lastEdited: serverTimestamp(),
                 ideas: [], // Optional: pre-fill empty ideas array
-                category: category
+                category: category_filter
             };
 
             await addDoc(collection(db, 'users', user.uid, 'projects'), newProject);
@@ -67,8 +80,9 @@ export default function CreateProject() {
                 value={nameText}
             />
 
-            <Dropdown
-                style={styles.dropdown}
+              {renderLabel()}
+              <Dropdown
+                style={[styles.dropdown, isFocus && { borderColor: '#4A90E2' }]}
                 placeholderStyle={styles.placeholderStyle}
                 selectedTextStyle={styles.selectedTextStyle}
                 inputSearchStyle={styles.inputSearchStyle}
@@ -78,15 +92,25 @@ export default function CreateProject() {
                 maxHeight={300}
                 labelField="label"
                 valueField="value"
-                placeholder="Select item"
+                placeholder={!isFocus ? 'Select filter' : '...'}
                 searchPlaceholder="Search..."
+                value={value}
+                onFocus={() => setIsFocus(true)}
+                onBlur={() => setIsFocus(false)}
                 onChange={item => {
-                    setcategory(item.value);
+                  setValue(item.value);
+                  setIsFocus(false);
+                  set_category_filter(item.value)
                 }}
                 renderLeftIcon={() => (
-                    <AntDesign style={styles.icon} color="white" name="Safety" size={20} />
+                  <AntDesign
+                    style={styles.icon}
+                    color={isFocus ? '#4A90E2' : 'white'}
+                    name="Safety"
+                    size={20}
+                  />
                 )}
-            />
+              />
 
             <ThemedView style={styles.bottomContainer}>
                 <Button title="Create" onPress={handleCreate} />
@@ -112,6 +136,16 @@ const styles = StyleSheet.create({
         borderBottomWidth: 0.5,
         color: "white",
     },
+    label: {
+        position: 'relative',
+        // backgroundColor: 'black',
+        color: "white",
+        left: 0,
+        top: 0,
+        zIndex: 999,
+        paddingHorizontal: 8,
+        fontSize: 11,
+      },
     icon: {
         marginRight: 5,
     },
