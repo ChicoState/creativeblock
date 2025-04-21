@@ -11,6 +11,8 @@ import { doc, getDoc, updateDoc } from 'firebase/firestore';
 import {IdeaModule } from '../classes/IdeaModule'
 import { IdeaTextModule } from '../classes/IdeaTextModule';
 import { IdeaImageModule } from '../classes/IdeaImageModule'
+import { IdeaAudioModule } from '../classes/IdeaAudioModule'
+import { IdeaVideoModule } from '../classes/IdeaVideoModule'
 
 export default function ProjectView() {
     const [nameText, setNameText] = useState(''); // Title for new idea.
@@ -44,6 +46,8 @@ export default function ProjectView() {
                         item.modules.forEach((item: any) => {
                             if (item.text != null) ideaModules.push(new IdeaTextModule(item.text));
                             if (item.image != null) ideaModules.push(new IdeaImageModule(item.image));
+                            if (item.audio != null) ideaModules.push(new IdeaAudioModule(item.audio));
+                            if (item.video != null) ideaModules.push(new IdeaVideoModule(item.video));
                         })
                         projectIdeas.push(new Idea(item.title, ideaModules));
                     });
@@ -71,6 +75,8 @@ export default function ProjectView() {
                 modules: idea.getModules().map(module => ({
                     text: (module instanceof IdeaTextModule) ? module.getText() : null,
                     image: (module instanceof IdeaImageModule) ? module.getImage() : null,
+                    audio: module instanceof IdeaAudioModule ? module.getUri()   : null,
+                    video: module instanceof IdeaVideoModule ? module.getUri()   : null,
                 })),
             }));
             
@@ -181,6 +187,18 @@ export default function ProjectView() {
                             }}>
                                 <ThemedText style={styles.addButtonText}>[+]New Image Module</ThemedText>
                             </TouchableOpacity>
+                            <TouchableOpacity onPress={() => {
+                                    currentIdea?.addModule(new IdeaAudioModule(""));
+                                    updateIdea(currentIdea);
+                                }}>
+                                  <ThemedText style={styles.addButtonText}>[+] New Audio Module</ThemedText>
+                                </TouchableOpacity>
+                                <TouchableOpacity onPress={() => {
+                                    currentIdea?.addModule(new IdeaVideoModule(""));
+                                    updateIdea(currentIdea);
+                                }}>
+                                  <ThemedText style={styles.addButtonText}>[+] New Video Module</ThemedText>
+                                </TouchableOpacity>
                             <FlatList
                                 data={currentIdea?.getModules()}
                                 keyExtractor={(item, index) => index.toString()}
