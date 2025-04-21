@@ -10,7 +10,8 @@ import { auth, db } from './firebase';
 import { doc, getDoc, updateDoc } from 'firebase/firestore';
 import {IdeaModule } from '../classes/IdeaModule'
 import { IdeaTextModule } from '../classes/IdeaTextModule';
-import { IdeaImageModule } from '../classes/IdeaImageModule'
+import { IdeaImageModule } from '../classes/IdeaImageModule';
+import { IdeaSheetMusicModule } from '../classes/IdeaSheetMusicModule';
 
 export default function ProjectView() {
     const [nameText, setNameText] = useState(''); // Title for new idea.
@@ -169,18 +170,34 @@ export default function ProjectView() {
                     <Modal visible={isIdeaModalVisible} onRequestClose={() => setIsIdeaModalVisible(false)}>
                         <ThemedView style={styles.ideaModal}>
                             <ThemedText style={styles.ideaTitle}>{currentIdea?.getTitle()}</ThemedText>
+
+
                             <TouchableOpacity onPress={() => {
                                 currentIdea?.addModule(new IdeaTextModule(""));
                                 updateIdea(currentIdea)
                             }}>
                                 <ThemedText style={styles.addButtonText}>[+]New Text Module</ThemedText>
                             </TouchableOpacity>
+
+
+
+
                             <TouchableOpacity onPress={() => {
                                 currentIdea?.addModule(new IdeaImageModule(""));
                                 updateIdea(currentIdea)
                             }}>
                                 <ThemedText style={styles.addButtonText}>[+]New Image Module</ThemedText>
                             </TouchableOpacity>
+
+
+                            <TouchableOpacity onPress={() => {
+                                currentIdea?.addModule(new IdeaSheetMusicModule(""));
+                                updateIdea(currentIdea)
+                            }}>
+                                <ThemedText style={styles.addButtonText}>[+]New Sheet Music Module</ThemedText>
+                            </TouchableOpacity>
+
+
                             <FlatList
                                 data={currentIdea?.getModules()}
                                 keyExtractor={(item, index) => index.toString()}
@@ -196,6 +213,9 @@ export default function ProjectView() {
                                     </ThemedView>
                                 )}
                             />
+
+
+
                         </ThemedView>
                     </Modal>
                 </ThemedView>
