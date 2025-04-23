@@ -1,4 +1,6 @@
 import { Stack } from 'expo-router';
+import ChatBubble from '@/components/ChatBubble';
+
 // 1. Import GestureHandlerRootView
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import React from 'react'; // Import React if not already present
@@ -20,6 +22,7 @@ export default function RootLayout() {
                 {/* If your file is actually project/[id].tsx, use that name: */}
                 {/* <Stack.Screen name="project/[id]" options={{ title: 'Project View' }} /> */}
             </Stack>
+        <ChatBubble />
         </GestureHandlerRootView>
     );
 }
