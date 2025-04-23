@@ -64,11 +64,10 @@ export class IdeaImageModule extends IdeaModule {
 
         return (
             <ThemedView style={styles.imageBox}>
-                <Image
+                {this.image ? <Image
                     source={{ uri: this.image }}
                     style={styles.imagePreview}
-
-                />
+                /> : null}
                 <Button
                     title="Choose Image"
                     color="gray"
