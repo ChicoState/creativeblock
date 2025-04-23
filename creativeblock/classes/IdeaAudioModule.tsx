@@ -6,11 +6,15 @@ import { IdeaModule } from '@/classes/IdeaModule';
 
 export class IdeaAudioModule extends IdeaModule {
   private uri: string;
+
   constructor(uri: string) {
     super();
     this.uri = uri;
   }
-  public getUri() { return this.uri; }
+
+  public getUri() {
+    return this.uri;
+  }
 
   public getView(onSave: () => void): JSX.Element {
     return (
