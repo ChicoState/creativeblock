@@ -3,10 +3,13 @@ import { Idea } from '@/classes/Idea'
 
 export class Project {
     private title: string; // Name of the project.
+    private category: string;
     private ideas: Idea[] = []; // Array of ideas.
 
-    constructor(title: string) { // Constructor for the Project class.
+    constructor(title: string, category?: string, ideas?: Idea[]) { // Constructor for the Project class.
         this.title = title;
+        this.category = (category) ? category : "";
+        if (ideas) this.ideas = ideas;
     }
     public getTitle(): string { // Getter for title.
         return this.title;
@@ -24,7 +27,7 @@ export class Project {
         if (newIdea) {
             this.ideas.push(newIdea);
         } else {
-            this.ideas.push(new Idea('', ''));
+            this.ideas.push(new Idea(''));
         }
     }
 
