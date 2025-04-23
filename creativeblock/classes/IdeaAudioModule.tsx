@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, TouchableOpacity, ActivityIndicator, Alert } from 'react-native';
+import { View, TouchableOpacity, ActivityIndicator, Alert, StyleSheet } from 'react-native';
 import { Audio } from 'expo-av';
 import { ThemedText } from '@/components/ThemedText';
 import { IdeaModule } from '@/classes/IdeaModule';
@@ -13,60 +13,128 @@ export class IdeaAudioModule extends IdeaModule {
   public getUri() { return this.uri; }
 
   public getView(onSave: () => void): JSX.Element {
-    // internal component for recording/playback
-    return <AudioRecorder initialUri={this.uri} onSave={newUri => {
-      this.uri = newUri;
-      onSave();
-    }} />;
+    return (
+      <AudioRecorder
+        initialUri={this.uri}
+        onSave={(newUri) => {
+          this.uri = newUri;
+          onSave();
+        }}
+      />
+    );
   }
 }
 
 type AudioRecorderProps = {
-  initialUri: string,
-  onSave: (uri: string) => void,
+  initialUri: string;
+  onSave: (uri: string) => void;
 };
-function AudioRecorder({ initialUri, onSave }: AudioRecorderProps) {
+
+export function AudioRecorder({ initialUri, onSave }: AudioRecorderProps) {
   const [recording, setRecording] = useState<Audio.Recording | null>(null);
   const [uri, setUri] = useState(initialUri);
   const [loading, setLoading] = useState(false);
+  const [sound, setSound] = useState<Audio.Sound | null>(null);
 
   useEffect(() => {
-    Audio.requestPermissionsAsync();
-    Audio.setAudioModeAsync({ allowsRecordingIOS: true, playsInSilentModeIOS: true });
+    (async () => {
+      try {
+        const { status } = await Audio.requestPermissionsAsync();
+        if (status !== 'granted') {
+          Alert.alert('Permission Required', 'Please allow audio recording permissions.');
+          return;
+        }
+        await Audio.setAudioModeAsync({
+          allowsRecordingIOS: true,
+          playsInSilentModeIOS: true,
+          staysActiveInBackground: false,
+          shouldDuckAndroid: false,
+        });
+      } catch (err) {
+        console.error('Audio setup error:', err);
+        Alert.alert('Error', 'Failed to set up audio mode.');
+      }
+    })();
+
+    return () => {
+      sound?.unloadAsync();
+    };
   }, []);
 
-  const start = async () => {
-    setLoading(true);
-    const { recording } = await Audio.Recording.createAsync(Audio.RecordingOptionsPresets.HIGH_QUALITY);
-    setRecording(recording);
-    setLoading(false);
+  const startRecording = async () => {
+    try {
+      setLoading(true);
+      const { recording } = await Audio.Recording.createAsync(
+        Audio.RecordingOptionsPresets.HIGH_QUALITY
+      );
+      setRecording(recording);
+    } catch (err) {
+      console.error('Recording start error:', err);
+      Alert.alert('Error', 'Unable to start recording');
+    } finally {
+      setLoading(false);
+    }
   };
-  const stop = async () => {
-    if (!recording) return;
-    setLoading(true);
-    await recording.stopAndUnloadAsync();
-    const newUri = recording.getURI()!;
-    setUri(newUri);
-    setRecording(null);
-    onSave(newUri);
-    setLoading(false);
+
+  const stopRecording = async () => {
+    try {
+      if (!recording) return;
+      setLoading(true);
+      await recording.stopAndUnloadAsync();
+      const newUri = recording.getURI()!;
+      console.log('Recorded URI:', newUri);
+      setUri(newUri);
+      setRecording(null);
+      onSave(newUri);
+    } catch (err) {
+      console.error('Recording stop error:', err);
+      Alert.alert('Error', 'Unable to stop recording');
+    } finally {
+      setLoading(false);
+    }
   };
-  const play = async () => {
+
+  const playSound = async () => {
     if (!uri) return;
-    const { sound } = await Audio.Sound.createAsync({ uri });
-    await sound.playAsync();
+    try {
+      if (sound) {
+        await sound.unloadAsync();
+      }
+      const { sound: newSound, status } = await Audio.Sound.createAsync(
+        { uri },
+        { shouldPlay: true }
+      );
+      await newSound.setVolumeAsync(1.0);
+      console.log('Playback status on load:', status);
+      newSound.setOnPlaybackStatusUpdate((s) => console.log('Playback status:', s));
+      setSound(newSound);
+    } catch (err) {
+      console.error('Playback error:', err);
+      Alert.alert('Error', 'Unable to play audio');
+    }
   };
 
   return (
-    <View style={{ marginVertical: 10 }}>
+    <View style={styles.container}>
       {loading && <ActivityIndicator />}
-      {!recording
-        ? <TouchableOpacity onPress={start}><ThemedText>[●] Record</ThemedText></TouchableOpacity>
-        : <TouchableOpacity onPress={stop}><ThemedText>[■] Stop</ThemedText></TouchableOpacity>
-      }
-      {!!uri && <TouchableOpacity onPress={play} style={{ marginTop: 5 }}>
-        <ThemedText>[►] Play</ThemedText>
-      </TouchableOpacity>}
+      <TouchableOpacity onPress={recording ? stopRecording : startRecording} style={styles.button}>
+        <ThemedText>{recording ? '[■] Stop' : '[●] Record'}</ThemedText>
+      </TouchableOpacity>
+      {!!uri && (
+        <TouchableOpacity onPress={playSound} style={styles.button}>
+          <ThemedText>[►] Play</ThemedText>
+        </TouchableOpacity>
+      )}
     </View>
   );
 }
+
+const styles = StyleSheet.create({
+  container: {
+    marginVertical: 10,
+    flexDirection: 'row',
+  },
+  button: {
+    marginRight: 12,
+  },
+});

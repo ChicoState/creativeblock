@@ -18,45 +18,20 @@ export class IdeaVideoModule extends IdeaModule {
   }
 
   public getView(onSave: () => void): JSX.Element {
-    const handleVideoPicker = async (source: 'camera' | 'gallery') => {
-      let result;
-      if (source === 'camera') {
-        const camPerm = await ImagePicker.requestCameraPermissionsAsync();
-        if (!camPerm.granted) {
-          return Alert.alert('Camera permission denied');
-        }
-        result = await ImagePicker.launchCameraAsync({
-          mediaTypes: ImagePicker.MediaTypeOptions.Videos,
-          quality: 1,
-          allowsEditing: false,
-        });
-      } else {
-        const libPerm = await ImagePicker.requestMediaLibraryPermissionsAsync();
-        if (!libPerm.granted) {
-          return Alert.alert('Media Library permission denied');
-        }
-        result = await ImagePicker.launchImageLibraryAsync({
-          mediaTypes: ImagePicker.MediaTypeOptions.Videos,
-          quality: 1,
-          allowsEditing: false,
-        });
+    const pickVideo = async () => {
+      const libPerm = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      if (!libPerm.granted) {
+        return Alert.alert('Media Library permission denied');
       }
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Videos,
+        quality: 1,
+        allowsEditing: false,
+      });
       if (!result.canceled && result.assets.length > 0) {
         this.uri = result.assets[0].uri;
         onSave();
       }
-    };
-
-    const showVideoPickerPrompt = () => {
-      Alert.alert(
-        'Choose Video Source',
-        'How would you like to add your video?',
-        [
-          { text: 'Record Video', onPress: () => handleVideoPicker('camera') },
-          { text: 'Pick From Library', onPress: () => handleVideoPicker('gallery') },
-          { text: 'Cancel', style: 'cancel' },
-        ]
-      );
     };
 
     return (
@@ -75,7 +50,7 @@ export class IdeaVideoModule extends IdeaModule {
         <Button
           title="Choose Video"
           color="gray"
-          onPress={showVideoPickerPrompt}
+          onPress={pickVideo}
         />
 
         {this.uri ? (
