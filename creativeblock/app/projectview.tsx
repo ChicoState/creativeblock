@@ -13,6 +13,7 @@ import {
   ActivityIndicator,
   KeyboardAvoidingView,
   Platform,
+  ScrollView,
   // Add ViewStyle if needed for specific style types
 } from 'react-native';
 import { ThemedText } from '@/components/ThemedText';
@@ -26,6 +27,8 @@ import { doc, getDoc, updateDoc, serverTimestamp, DocumentData } from 'firebase/
 import { IdeaModule } from '@/classes/IdeaModule';
 import { IdeaTextModule } from '@/classes/IdeaTextModule';
 import { IdeaImageModule } from '@/classes/IdeaImageModule';
+import { IdeaAudioModule } from '@/classes/IdeaAudioModule';
+import { IdeaVideoModule } from '@/classes/IdeaVideoModule';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -129,6 +132,15 @@ const IdeaEditModal: React.FC<IdeaEditModalProps> = ({
         const updatedIdea = new Idea(idea.getTitle(), [...idea.getModules(), new IdeaImageModule('')]);
         onUpdateIdea(updatedIdea);
     };
+    const handleAddAudioModule = (): void => {
+           const updatedIdea = new Idea(idea.getTitle(), [...idea.getModules(), new IdeaAudioModule('')]);
+           onUpdateIdea(updatedIdea);
+    };
+
+    const handleAddVideoModule = (): void => {
+        const updatedIdea = new Idea(idea.getTitle(), [...idea.getModules(), new IdeaVideoModule('')]);
+        onUpdateIdea(updatedIdea);
+    };
 
     const handleRemoveModule = (index: number): void => {
         const modules = idea.getModules().filter((_, i) => i !== index);
@@ -171,7 +183,11 @@ const IdeaEditModal: React.FC<IdeaEditModalProps> = ({
                         data={idea.getModules()}
                         keyExtractor={(_, i) => i.toString()}
                         ListHeaderComponent={() => (
-                            <ThemedView style={styles.actionsRow}>
+                            <ScrollView
+                                horizontal
+                                showsHorizontalScrollIndicator= {false}
+                                contentContainerStyle={styles.actionsRow}
+                            >
                                 <TouchableOpacity
                                     style={styles.secondaryButton}
                                     onPress={handleAddTextModule}
@@ -187,7 +203,17 @@ const IdeaEditModal: React.FC<IdeaEditModalProps> = ({
                                     <MaterialIcons name="image" size={20} color="#fff" style={{ marginRight: 4 }} />
                                     <ThemedText style={styles.secondaryButtonText}>Add Image</ThemedText>
                                 </TouchableOpacity>
-                            </ThemedView>
+
+                                <TouchableOpacity style={styles.secondaryButton} onPress={handleAddAudioModule}>
+                                    <MaterialIcons name="mic" size={20} color="#fff" style={{ marginRight: 4 }} />
+                                    <ThemedText style={styles.secondaryButtonText}>Add Audio</ThemedText>
+                                </TouchableOpacity>
+
+                                <TouchableOpacity style={styles.secondaryButton} onPress={handleAddVideoModule}>
+                                    <MaterialIcons name="videocam" size={20} color="#fff" style={{ marginRight: 4 }} />
+                                    <ThemedText style={styles.secondaryButtonText}>Add Video</ThemedText>
+                                </TouchableOpacity>
+                            </ScrollView>
                         )}
                         ListEmptyComponent={() => (
                             <ThemedView style={styles.emptyModulesContainer}>
@@ -298,11 +324,22 @@ export default function ProjectView() {
       // Map ideas to plain objects for Firestore
       const ideasPayload = updatedIdeas.map((idea) => ({
         title: idea.getTitle(),
-        modules: idea.getModules().map((m) =>
-          m instanceof IdeaTextModule
-            ? { text: m.getText(), image: null }
-            : { text: null, image: (m as IdeaImageModule).getImage() } // Type assertion
-        ),
+        modules: idea.getModules().map((m) => {
+            if (m instanceof IdeaTextModule) {
+                return { text: m.getText(), image: null, audio: null, video: null };
+            }
+            if (m instanceof IdeaImageModule) {
+                return { text: null, image: m.getImage(), audio: null, video: null };
+            }
+            if (m instanceof IdeaAudioModule) {
+                return { text: null, image: null, audio: m.getUri(), video: null };
+            }
+            if (m instanceof IdeaVideoModule) {
+                return { text: null, image: null, audio: null, video: m.getUri() };
+            }
+            // fallback empty
+            return { text: null, image: null, audio: null, video: null };
+        }),
       }));
 
       const projectDocRef = doc(db, 'users', user.uid, 'projects', projectId);
