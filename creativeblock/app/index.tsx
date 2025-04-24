@@ -1,6 +1,6 @@
 ﻿// Firebase-backed version of your index.tsx (replacing AsyncStorage for auth)
 import React, { useState, useEffect } from 'react';
-import { StyleSheet, TouchableOpacity, Alert, Image } from "react-native";
+import { StyleSheet, TouchableOpacity, Alert, Image, ActivityIndicator, } from "react-native";
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
 import { ThemedTextInput } from '@/components/ThemedTextInput';
@@ -46,18 +46,25 @@ export default function Index() {
     const goToWelcome = () => setCurrentScreen(SCREENS.WELCOME);
     const goToCreateAccount = () => setCurrentScreen(SCREENS.CREATE_ACCOUNT);
     const goToForgotPassword = () => setCurrentScreen(SCREENS.FORGOT_PASSWORD);
-
+    const [loggingIn, setLoggingIn] = useState(false);
+      
     const handleLogin = async () => {
         if (!email || !password) {
             Alert.alert('Error', 'Please enter both email and password');
             return;
         }
+        console.log('handleLogin: starting');  
+
         try {
+            setLoggingIn(true);   
             await signInWithEmailAndPassword(auth, email, password);
             router.push('/projecthome');
         } catch (error: any) {
             Alert.alert('Login Error', error.message);
-        }
+        }finally {
+            setLoggingIn(false);
+            console.log('handleLogin: finished'); 
+          }
     };
 
     const handleCreateAccount = async () => {
@@ -118,10 +125,26 @@ export default function Index() {
             <ThemedView style={styles.formContainer}>
                 <ThemedTextInput placeholder="Email" value={email} onChangeText={setEmail} style={styles.input} />
                 <ThemedTextInput placeholder="Password" value={password} onChangeText={setPassword} secureTextEntry style={styles.input} />
-
-                <TouchableOpacity style={styles.primaryButton} onPress={handleLogin}>
-                    <ThemedText style={styles.buttonText}>Login</ThemedText>
-                </TouchableOpacity>
+                <TouchableOpacity
+                    onPress={handleLogin}
+                    disabled={loggingIn}                                   /* prevents double-tap */
+                    style={[
+                        styles.primaryButton,
+                        loggingIn && { opacity: 0.5 },                      /* dim when busy */
+                    ]}
+                    >
+                    {loggingIn ? (
+                        /* Spinner + text looks slicker than text alone */
+                        <ThemedView style={{ flexDirection: 'row', alignItems: 'center' }}>
+                        <ActivityIndicator size="small" color="#fff" />
+                        <ThemedText style={[styles.buttonText, { marginLeft: 8 }]}>
+                            Logging in…
+                        </ThemedText>
+                        </ThemedView>
+                    ) : (
+                        <ThemedText style={styles.buttonText}>Login</ThemedText>
+                    )}
+                    </TouchableOpacity>
 
                 <ThemedView style={styles.optionsContainer}>
                     <TouchableOpacity onPress={goToCreateAccount}>

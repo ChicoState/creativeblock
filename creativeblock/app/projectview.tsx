@@ -29,7 +29,7 @@ import { IdeaTextModule } from '@/classes/IdeaTextModule';
 import { IdeaImageModule } from '@/classes/IdeaImageModule';
 import { IdeaAudioModule } from '@/classes/IdeaAudioModule';
 import { IdeaVideoModule } from '@/classes/IdeaVideoModule';
-
+import { Dropdown } from 'react-native-element-dropdown';
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
 // --- Typed Modal Components ---
@@ -124,21 +124,21 @@ const IdeaEditModal: React.FC<IdeaEditModalProps> = ({
     // Type the handlers for clarity (optional but good practice)
     const handleAddTextModule = (): void => {
         // Ensure getModules() and getTitle() exist on Idea class
-        const updatedIdea = new Idea(idea.getTitle(), [...idea.getModules(), new IdeaTextModule('')]);
+        const updatedIdea = new Idea(idea.getTitle(), [new IdeaTextModule(''), ...idea.getModules()]);
         onUpdateIdea(updatedIdea);
     };
 
     const handleAddImageModule = (): void => {
-        const updatedIdea = new Idea(idea.getTitle(), [...idea.getModules(), new IdeaImageModule('')]);
+        const updatedIdea = new Idea(idea.getTitle(), [new IdeaImageModule(''), ...idea.getModules()]);
         onUpdateIdea(updatedIdea);
     };
     const handleAddAudioModule = (): void => {
-           const updatedIdea = new Idea(idea.getTitle(), [...idea.getModules(), new IdeaAudioModule('')]);
+           const updatedIdea = new Idea(idea.getTitle(), [new IdeaAudioModule(''),...idea.getModules()]);
            onUpdateIdea(updatedIdea);
     };
 
     const handleAddVideoModule = (): void => {
-        const updatedIdea = new Idea(idea.getTitle(), [...idea.getModules(), new IdeaVideoModule('')]);
+        const updatedIdea = new Idea(idea.getTitle(), [new IdeaVideoModule(''), ...idea.getModules() ]);
         onUpdateIdea(updatedIdea);
     };
 
@@ -153,6 +153,33 @@ const IdeaEditModal: React.FC<IdeaEditModalProps> = ({
         const updatedIdea = new Idea(idea.getTitle(), idea.getModules().map(mod => mod));
         onUpdateIdea(updatedIdea);
     }
+
+          /* ───────── dropdown config ───────── */
+      const MODULE_OPTIONS = [
+        { label: 'Text',  value: 'text' },
+        { label: 'Image', value: 'image' },
+        { label: 'Audio', value: 'audio' },
+        { label: 'Video', value: 'video' },
+      ];
+
+      const handleAddModule = (type: string) => {
+        switch (type) {
+          case 'text':
+            handleAddTextModule();
+            break;
+          case 'image':
+            handleAddImageModule();
+            break;
+          case 'audio':
+            handleAddAudioModule();
+            break;
+          case 'video':
+            handleAddVideoModule();
+            break;
+        }
+      };
+
+
 
     return (
         <Modal
@@ -183,37 +210,18 @@ const IdeaEditModal: React.FC<IdeaEditModalProps> = ({
                         data={idea.getModules()}
                         keyExtractor={(_, i) => i.toString()}
                         ListHeaderComponent={() => (
-                            <ScrollView
-                                horizontal
-                                showsHorizontalScrollIndicator= {false}
-                                contentContainerStyle={styles.actionsRow}
-                            >
-                                <TouchableOpacity
-                                    style={styles.secondaryButton}
-                                    onPress={handleAddTextModule}
-                                >
-                                    <MaterialIcons name="text-fields" size={20} color="#fff" style={{ marginRight: 4 }} />
-                                    <ThemedText style={styles.secondaryButtonText}>Add Text</ThemedText>
-                                </TouchableOpacity>
-
-                                <TouchableOpacity
-                                    style={styles.secondaryButton}
-                                    onPress={handleAddImageModule}
-                                >
-                                    <MaterialIcons name="image" size={20} color="#fff" style={{ marginRight: 4 }} />
-                                    <ThemedText style={styles.secondaryButtonText}>Add Image</ThemedText>
-                                </TouchableOpacity>
-
-                                <TouchableOpacity style={styles.secondaryButton} onPress={handleAddAudioModule}>
-                                    <MaterialIcons name="mic" size={20} color="#fff" style={{ marginRight: 4 }} />
-                                    <ThemedText style={styles.secondaryButtonText}>Add Audio</ThemedText>
-                                </TouchableOpacity>
-
-                                <TouchableOpacity style={styles.secondaryButton} onPress={handleAddVideoModule}>
-                                    <MaterialIcons name="videocam" size={20} color="#fff" style={{ marginRight: 4 }} />
-                                    <ThemedText style={styles.secondaryButtonText}>Add Video</ThemedText>
-                                </TouchableOpacity>
-                            </ScrollView>
+                          <Dropdown
+                          data={MODULE_OPTIONS}
+                          labelField="label"
+                          valueField="value"
+                          placeholder="Add module…"
+                          onChange={item => handleAddModule(item.value)}
+                          style={styles.dropdown}
+                          placeholderStyle={{ color: '#888' }}
+                          selectedTextStyle={{ color: '#333' }}
+                          iconStyle={{ tintColor: '#4A90E2' }}
+                        />
+                        
                         )}
                         ListEmptyComponent={() => (
                             <ThemedView style={styles.emptyModulesContainer}>
@@ -329,7 +337,11 @@ export default function ProjectView() {
                 return { text: m.getText(), image: null, audio: null, video: null };
             }
             if (m instanceof IdeaImageModule) {
-                return { text: null, image: m.getImage(), audio: null, video: null };
+              return {
+                type: 'image',
+                image: m.getImage(),
+                caption: m.getCaption(),   // ← add this line
+              };
             }
             if (m instanceof IdeaAudioModule) {
                 return { text: null, image: null, audio: m.getUri(), video: null };
@@ -796,4 +808,14 @@ const styles = StyleSheet.create({
     marginLeft: 8,
     fontSize: 12,
   },
+
+  dropdown: {
+    margin: 16,
+    height: 48,
+    borderWidth: 1,
+    borderColor: '#ccc',
+    borderRadius: 8,
+    paddingHorizontal: 12,
+  },
+  
 });
