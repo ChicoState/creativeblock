@@ -13,10 +13,12 @@ import {
   ActivityIndicator,
   KeyboardAvoidingView,
   Platform,
+  ScrollView,
   // Add ViewStyle if needed for specific style types
 } from 'react-native';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
+import { ThemedTouchableOpacity } from '@/components/ThemedTouchableOpacity';
 import { ThemedTextInput } from '@/components/ThemedTextInput';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Project } from '@/classes/Project';
@@ -26,7 +28,9 @@ import { doc, getDoc, updateDoc, serverTimestamp, DocumentData } from 'firebase/
 import { IdeaModule } from '@/classes/IdeaModule';
 import { IdeaTextModule } from '@/classes/IdeaTextModule';
 import { IdeaImageModule } from '@/classes/IdeaImageModule';
-
+import { IdeaAudioModule } from '@/classes/IdeaAudioModule';
+import { IdeaVideoModule } from '@/classes/IdeaVideoModule';
+import { Dropdown } from 'react-native-element-dropdown';
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
 // --- Typed Modal Components ---
@@ -62,7 +66,7 @@ const IdeaCreationModal: React.FC<IdeaCreationModalProps> = ({
           onClose();
         }}
       >
-        <TouchableOpacity activeOpacity={1} onPress={(e) => e.stopPropagation()}>
+        <ThemedTouchableOpacity activeOpacity={1} onPress={(e) => e.stopPropagation()}>
           <KeyboardAvoidingView
             behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
           >
@@ -95,7 +99,7 @@ const IdeaCreationModal: React.FC<IdeaCreationModalProps> = ({
               </TouchableOpacity>
             </ThemedView>
           </KeyboardAvoidingView>
-        </TouchableOpacity>
+        </ThemedTouchableOpacity>
       </TouchableOpacity>
     </Modal>
   );
@@ -121,12 +125,21 @@ const IdeaEditModal: React.FC<IdeaEditModalProps> = ({
     // Type the handlers for clarity (optional but good practice)
     const handleAddTextModule = (): void => {
         // Ensure getModules() and getTitle() exist on Idea class
-        const updatedIdea = new Idea(idea.getTitle(), [...idea.getModules(), new IdeaTextModule('')]);
+        const updatedIdea = new Idea(idea.getTitle(), [new IdeaTextModule(''), ...idea.getModules()]);
         onUpdateIdea(updatedIdea);
     };
 
     const handleAddImageModule = (): void => {
-        const updatedIdea = new Idea(idea.getTitle(), [...idea.getModules(), new IdeaImageModule('')]);
+        const updatedIdea = new Idea(idea.getTitle(), [new IdeaImageModule(''), ...idea.getModules()]);
+        onUpdateIdea(updatedIdea);
+    };
+    const handleAddAudioModule = (): void => {
+           const updatedIdea = new Idea(idea.getTitle(), [new IdeaAudioModule(''),...idea.getModules()]);
+           onUpdateIdea(updatedIdea);
+    };
+
+    const handleAddVideoModule = (): void => {
+        const updatedIdea = new Idea(idea.getTitle(), [new IdeaVideoModule(''), ...idea.getModules() ]);
         onUpdateIdea(updatedIdea);
     };
 
@@ -141,6 +154,33 @@ const IdeaEditModal: React.FC<IdeaEditModalProps> = ({
         const updatedIdea = new Idea(idea.getTitle(), idea.getModules().map(mod => mod));
         onUpdateIdea(updatedIdea);
     }
+
+          /* ───────── dropdown config ───────── */
+      const MODULE_OPTIONS = [
+        { label: 'Text',  value: 'text' },
+        { label: 'Image', value: 'image' },
+        { label: 'Audio', value: 'audio' },
+        { label: 'Video', value: 'video' },
+      ];
+
+      const handleAddModule = (type: string) => {
+        switch (type) {
+          case 'text':
+            handleAddTextModule();
+            break;
+          case 'image':
+            handleAddImageModule();
+            break;
+          case 'audio':
+            handleAddAudioModule();
+            break;
+          case 'video':
+            handleAddVideoModule();
+            break;
+        }
+      };
+
+
 
     return (
         <Modal
@@ -171,23 +211,18 @@ const IdeaEditModal: React.FC<IdeaEditModalProps> = ({
                         data={idea.getModules()}
                         keyExtractor={(_, i) => i.toString()}
                         ListHeaderComponent={() => (
-                            <ThemedView style={styles.actionsRow}>
-                                <TouchableOpacity
-                                    style={styles.secondaryButton}
-                                    onPress={handleAddTextModule}
-                                >
-                                    <MaterialIcons name="text-fields" size={20} color="#fff" style={{ marginRight: 4 }} />
-                                    <ThemedText style={styles.secondaryButtonText}>Add Text</ThemedText>
-                                </TouchableOpacity>
-
-                                <TouchableOpacity
-                                    style={styles.secondaryButton}
-                                    onPress={handleAddImageModule}
-                                >
-                                    <MaterialIcons name="image" size={20} color="#fff" style={{ marginRight: 4 }} />
-                                    <ThemedText style={styles.secondaryButtonText}>Add Image</ThemedText>
-                                </TouchableOpacity>
-                            </ThemedView>
+                          <Dropdown
+                          data={MODULE_OPTIONS}
+                          labelField="label"
+                          valueField="value"
+                          placeholder="Add module…"
+                          onChange={item => handleAddModule(item.value)}
+                          style={styles.dropdown}
+                          placeholderStyle={{ color: '#888' }}
+                          selectedTextStyle={{ color: '#333' }}
+                          iconStyle={{ tintColor: '#4A90E2' }}
+                        />
+                        
                         )}
                         ListEmptyComponent={() => (
                             <ThemedView style={styles.emptyModulesContainer}>
@@ -298,11 +333,26 @@ export default function ProjectView() {
       // Map ideas to plain objects for Firestore
       const ideasPayload = updatedIdeas.map((idea) => ({
         title: idea.getTitle(),
-        modules: idea.getModules().map((m) =>
-          m instanceof IdeaTextModule
-            ? { text: m.getText(), image: null }
-            : { text: null, image: (m as IdeaImageModule).getImage() } // Type assertion
-        ),
+        modules: idea.getModules().map((m) => {
+            if (m instanceof IdeaTextModule) {
+                return { text: m.getText(), image: null, audio: null, video: null };
+            }
+            if (m instanceof IdeaImageModule) {
+              return {
+                type: 'image',
+                image: m.getImage(),
+                caption: m.getCaption(),   // ← add this line
+              };
+            }
+            if (m instanceof IdeaAudioModule) {
+                return { text: null, image: null, audio: m.getUri(), video: null };
+            }
+            if (m instanceof IdeaVideoModule) {
+                return { text: null, image: null, audio: null, video: m.getUri() };
+            }
+            // fallback empty
+            return { text: null, image: null, audio: null, video: null };
+        }),
       }));
 
       const projectDocRef = doc(db, 'users', user.uid, 'projects', projectId);
@@ -460,7 +510,7 @@ export default function ProjectView() {
                   });
               }}
             >
-              <TouchableOpacity
+              <ThemedTouchableOpacity
                 style={styles.ideaItem}
                 activeOpacity={0.7} // Add feedback on press
                 onPress={() => {
@@ -473,7 +523,7 @@ export default function ProjectView() {
                  <ThemedText style={styles.modulesCount}>
                    {item.getModules().length} {item.getModules().length === 1 ? 'module' : 'modules'}
                  </ThemedText>
-              </TouchableOpacity>
+              </ThemedTouchableOpacity>
             </Swipeable>
           )}
         />
@@ -547,20 +597,20 @@ const styles = StyleSheet.create({
     paddingBottom: 20,
   },
   ideaItem: {
-    backgroundColor: '#fff', // Assuming a light theme background for the item itself
+    //backgroundColor: '#fff', // Assuming a light theme background for the item itself
     padding: 16,
     borderWidth: 1,
-    borderColor: '#eee', // Lighter border
+    //borderColor: '#eee', // Lighter border
     borderRadius: 8,
   },
   ideaTitle: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#333', // Darker text for readability
+    //color: '#333', // Darker text for readability
   },
   modulesCount: {
     fontSize: 12,
-    color: '#888',
+    //color: '#888',
     marginTop: 4,
   },
   swipeableContainer: {
@@ -593,7 +643,7 @@ const styles = StyleSheet.create({
   },
   createModalContent: {
     width: Math.min(SCREEN_WIDTH * 0.85, 400), // Max width for larger screens
-    backgroundColor: '#fff', // Define background for themed view
+    //backgroundColor: '#fff', // Define background for themed view
     padding: 20,
     borderRadius: 12,
     alignItems: 'center',
@@ -605,14 +655,14 @@ const styles = StyleSheet.create({
   },
   ideaModal: {
     flex: 1,
-    backgroundColor: '#fff', // Define background for themed view
+    //backgroundColor: '#fff', // Define background for themed view
     // Padding is applied to FlatList content/header instead
   },
   modalTitle: {
     fontSize: 20,
     fontWeight: '700',
     marginBottom: 16,
-    color: '#333', // Darker text
+    //color: '#333', // Darker text
     textAlign: 'center', // Center title in create modal
   },
   fullWidthInput: {
@@ -667,7 +717,7 @@ const styles = StyleSheet.create({
     borderColor: '#eee',
     borderRadius: 8,
     padding: 12,
-    backgroundColor: '#fdfdfd', // Slightly off-white background
+    //backgroundColor: '#fdfdfd', // Slightly off-white background
     marginHorizontal: 20, // Add horizontal margin
   },
   deleteButton: {
@@ -694,7 +744,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10, // Less horizontal padding for header items
     borderBottomWidth: 1,
     borderBottomColor: '#eee',
-    backgroundColor: '#fff', // Header background
+    //backgroundColor: '#fff', // Header background
   },
   backButton: {
     flexDirection: 'row',
@@ -759,4 +809,14 @@ const styles = StyleSheet.create({
     marginLeft: 8,
     fontSize: 12,
   },
+
+  dropdown: {
+    margin: 16,
+    height: 48,
+    borderWidth: 1,
+    borderColor: '#ccc',
+    borderRadius: 8,
+    paddingHorizontal: 12,
+  },
+  
 });
