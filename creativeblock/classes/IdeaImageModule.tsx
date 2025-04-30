@@ -100,7 +100,7 @@ const styles = StyleSheet.create({
     imageBox: {
         padding: 12,
         borderRadius: 8,
-        backgroundColor: '#f0f0f0',
+        //backgroundColor: '#f0f0f0',
         alignItems: 'center',
         marginBottom: 10,
         marginRight: 10,

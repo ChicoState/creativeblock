@@ -18,6 +18,7 @@ import {
 } from 'react-native';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
+import { ThemedTouchableOpacity } from '@/components/ThemedTouchableOpacity';
 import { ThemedTextInput } from '@/components/ThemedTextInput';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Project } from '@/classes/Project';
@@ -65,7 +66,7 @@ const IdeaCreationModal: React.FC<IdeaCreationModalProps> = ({
           onClose();
         }}
       >
-        <TouchableOpacity activeOpacity={1} onPress={(e) => e.stopPropagation()}>
+        <ThemedTouchableOpacity activeOpacity={1} onPress={(e) => e.stopPropagation()}>
           <KeyboardAvoidingView
             behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
           >
@@ -98,7 +99,7 @@ const IdeaCreationModal: React.FC<IdeaCreationModalProps> = ({
               </TouchableOpacity>
             </ThemedView>
           </KeyboardAvoidingView>
-        </TouchableOpacity>
+        </ThemedTouchableOpacity>
       </TouchableOpacity>
     </Modal>
   );
@@ -509,7 +510,7 @@ export default function ProjectView() {
                   });
               }}
             >
-              <TouchableOpacity
+              <ThemedTouchableOpacity
                 style={styles.ideaItem}
                 activeOpacity={0.7} // Add feedback on press
                 onPress={() => {
@@ -522,7 +523,7 @@ export default function ProjectView() {
                  <ThemedText style={styles.modulesCount}>
                    {item.getModules().length} {item.getModules().length === 1 ? 'module' : 'modules'}
                  </ThemedText>
-              </TouchableOpacity>
+              </ThemedTouchableOpacity>
             </Swipeable>
           )}
         />
@@ -596,20 +597,20 @@ const styles = StyleSheet.create({
     paddingBottom: 20,
   },
   ideaItem: {
-    backgroundColor: '#fff', // Assuming a light theme background for the item itself
+    //backgroundColor: '#fff', // Assuming a light theme background for the item itself
     padding: 16,
     borderWidth: 1,
-    borderColor: '#eee', // Lighter border
+    //borderColor: '#eee', // Lighter border
     borderRadius: 8,
   },
   ideaTitle: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#333', // Darker text for readability
+    //color: '#333', // Darker text for readability
   },
   modulesCount: {
     fontSize: 12,
-    color: '#888',
+    //color: '#888',
     marginTop: 4,
   },
   swipeableContainer: {
@@ -642,7 +643,7 @@ const styles = StyleSheet.create({
   },
   createModalContent: {
     width: Math.min(SCREEN_WIDTH * 0.85, 400), // Max width for larger screens
-    backgroundColor: '#fff', // Define background for themed view
+    //backgroundColor: '#fff', // Define background for themed view
     padding: 20,
     borderRadius: 12,
     alignItems: 'center',
@@ -654,14 +655,14 @@ const styles = StyleSheet.create({
   },
   ideaModal: {
     flex: 1,
-    backgroundColor: '#fff', // Define background for themed view
+    //backgroundColor: '#fff', // Define background for themed view
     // Padding is applied to FlatList content/header instead
   },
   modalTitle: {
     fontSize: 20,
     fontWeight: '700',
     marginBottom: 16,
-    color: '#333', // Darker text
+    //color: '#333', // Darker text
     textAlign: 'center', // Center title in create modal
   },
   fullWidthInput: {
@@ -716,7 +717,7 @@ const styles = StyleSheet.create({
     borderColor: '#eee',
     borderRadius: 8,
     padding: 12,
-    backgroundColor: '#fdfdfd', // Slightly off-white background
+    //backgroundColor: '#fdfdfd', // Slightly off-white background
     marginHorizontal: 20, // Add horizontal margin
   },
   deleteButton: {
@@ -743,7 +744,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10, // Less horizontal padding for header items
     borderBottomWidth: 1,
     borderBottomColor: '#eee',
-    backgroundColor: '#fff', // Header background
+    //backgroundColor: '#fff', // Header background
   },
   backButton: {
     flexDirection: 'row',

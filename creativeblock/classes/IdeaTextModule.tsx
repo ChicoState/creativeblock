@@ -46,7 +46,7 @@ export class IdeaTextModule extends IdeaModule {
 /* styles */
 const styles = StyleSheet.create({
   input: {
-    color: '#333',
+    //color: '#333',
     fontSize: 16,
     padding: 10,
     borderWidth: 1,
