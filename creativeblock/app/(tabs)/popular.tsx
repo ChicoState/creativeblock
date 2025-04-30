@@ -184,9 +184,6 @@ export default function ProjectHome() {
                             )}
                         </TouchableOpacity>
 
-                        <TouchableOpacity onPress={() => handleDeleteProject(item.id)}>
-                            <Feather name="trash-2" size={20} color="#ff4d4d" />
-                        </TouchableOpacity>
                     </ThemedView>
 
 
@@ -194,13 +191,8 @@ export default function ProjectHome() {
                 ListEmptyComponent={<ThemedText>No projects yet. Create one below!</ThemedText>}
             />
 
-            <TouchableOpacity style={styles.createButton} onPress={handleCreateProject}>
-                <ThemedText style={styles.buttonText}>Create New Project</ThemedText>
-            </TouchableOpacity>
 
-            <TouchableOpacity style={styles.signOutButton} onPress={handleSignOut}>
-                <ThemedText style={styles.signOutText}>Sign Out</ThemedText>
-            </TouchableOpacity>
+
 
 
         </ThemedView>
@@ -265,7 +257,7 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
 
   },
-  
+
   deleteButton: {
     marginTop: 8,
     backgroundColor: '#ff4d4d',
