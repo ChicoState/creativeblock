@@ -5,6 +5,7 @@ export class Project {
     private title: string; // Name of the project.
     private category: string;
     private ideas: Idea[] = []; // Array of ideas.
+    private is_public : bool;
 
     constructor(title: string, category?: string, ideas?: Idea[]) { // Constructor for the Project class.
         this.title = title;
@@ -21,6 +22,14 @@ export class Project {
 
     public getIdeas(): Idea[] { // Returns array of ideas.
         return this.ideas;
+    }
+
+public getIsPublic() : bool {
+    return is_public;
+    }
+
+public setIsPublic (newPublicity) : void {
+    this.is_public = newPublicity;
     }
 
     public addIdea(newIdea?: Idea): void { // Adds a new idea. Will

@@ -1,6 +1,7 @@
 ﻿// Firebase-backed version of your index.tsx (replacing AsyncStorage for auth)
 import React, { useState, useEffect } from 'react';
 import { StyleSheet, TouchableOpacity, Alert, Image, ActivityIndicator, } from "react-native";
+import {Redirect} from 'expo-router'
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
 import { ThemedTextInput } from '@/components/ThemedTextInput';
@@ -20,6 +21,12 @@ const SCREENS = {
     FORGOT_PASSWORD: 'forgotPassword'
 };
 
+const StartPage = () =>
+{ return <Redirect href = "home" />
+    };
+
+//export default StartPage;
+
 export default function Index() {
     const [currentScreen, setCurrentScreen] = useState(SCREENS.WELCOME);
     const [email, setEmail] = useState('');
@@ -35,7 +42,7 @@ export default function Index() {
     useEffect(() => {
         const unsubscribe = onAuthStateChanged(auth, (user) => {
             if (user) {
-                router.push('/projecthome');
+                router.push('/home');
             } else {
                 setIsLoading(false);
             }
@@ -58,7 +65,7 @@ export default function Index() {
         try {
             setLoggingIn(true);   
             await signInWithEmailAndPassword(auth, email, password);
-            router.push('/projecthome');
+            router.push('/home');
         } catch (error: any) {
             Alert.alert('Login Error', error.message);
         }finally {
@@ -113,7 +120,7 @@ export default function Index() {
         }
     };
 
-    const handleGuestLogin = () => router.push('/projecthome');
+    const handleGuestLogin = () => router.push('/home');
 
     const renderWelcomeScreen = () => (
         <ThemedView style={styles.container}>
