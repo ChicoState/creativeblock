@@ -42,9 +42,9 @@ export default function ProjectHome() {
     const renderLabel = () => {
       if (value || isFocus) {
         return (
-          <ThemedText style={[styles.label, isFocus && { color: '#4A90E2' }]}>
+          <Text style={[styles.label, isFocus && { color: '#4A90E2' }]}>
             Select filter
-          </ThemedText>
+          </Text>
         );
       }
       return null;
@@ -184,9 +184,6 @@ export default function ProjectHome() {
                             )}
                         </TouchableOpacity>
 
-                        <TouchableOpacity onPress={() => handleDeleteProject(item.id)}>
-                            <Feather name="trash-2" size={20} color="#ff4d4d" />
-                        </TouchableOpacity>
                     </ThemedView>
 
 
@@ -194,13 +191,8 @@ export default function ProjectHome() {
                 ListEmptyComponent={<ThemedText>No projects yet. Create one below!</ThemedText>}
             />
 
-            <TouchableOpacity style={styles.createButton} onPress={handleCreateProject}>
-                <ThemedText style={styles.buttonText}>Create New Project</ThemedText>
-            </TouchableOpacity>
 
-            <TouchableOpacity style={styles.signOutButton} onPress={handleSignOut}>
-                <ThemedText style={styles.signOutText}>Sign Out</ThemedText>
-            </TouchableOpacity>
+
 
 
         </ThemedView>
@@ -265,7 +257,7 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
 
   },
-  
+
   deleteButton: {
     marginTop: 8,
     backgroundColor: '#ff4d4d',
@@ -301,7 +293,7 @@ const styles = StyleSheet.create({
   label: {
     position: 'relative',
     // backgroundColor: 'black',
-    color: "gray",
+    color: "white",
     left: 0,
     top: 0,
     zIndex: 999,
@@ -309,15 +301,15 @@ const styles = StyleSheet.create({
     fontSize: 11,
   },
   placeholderStyle: {
-    color: "gray",
+    color: "white",
     fontSize: 16,
   },
   selectedTextStyle: {
-    color: "gray",
+    color: "white",
     fontSize: 16,
   },
   iconStyle: {
-    color: "gray",
+    color: "white",
     width: 20,
     height: 20,
   },

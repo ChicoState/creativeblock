@@ -42,9 +42,9 @@ export default function ProjectHome() {
     const renderLabel = () => {
       if (value || isFocus) {
         return (
-          <ThemedText style={[styles.label, isFocus && { color: '#4A90E2' }]}>
+          <Text style={[styles.label, isFocus && { color: '#4A90E2' }]}>
             Select filter
-          </ThemedText>
+          </Text>
         );
       }
       return null;
@@ -301,7 +301,7 @@ const styles = StyleSheet.create({
   label: {
     position: 'relative',
     // backgroundColor: 'black',
-    color: "gray",
+    color: "white",
     left: 0,
     top: 0,
     zIndex: 999,
@@ -309,15 +309,15 @@ const styles = StyleSheet.create({
     fontSize: 11,
   },
   placeholderStyle: {
-    color: "gray",
+    color: "white",
     fontSize: 16,
   },
   selectedTextStyle: {
-    color: "gray",
+    color: "white",
     fontSize: 16,
   },
   iconStyle: {
-    color: "gray",
+    color: "white",
     width: 20,
     height: 20,
   },

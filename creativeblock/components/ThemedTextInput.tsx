@@ -15,7 +15,7 @@ export function ThemedTextInput({
 }: ThemedTextInputProps) {
     const styles = StyleSheet.create({
         input: {
-            height: 40,
+           // height: 40,
             margin: 12,
             borderWidth: 1,
             padding: 10,
@@ -25,6 +25,6 @@ export function ThemedTextInput({
         },
     });
     return (
-        <TextInput style={styles.input} {...rest} />
+        <TextInput style={[styles.input, style]} {...rest} />
     );
 }
