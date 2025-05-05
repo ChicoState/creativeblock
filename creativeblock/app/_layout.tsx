@@ -1,5 +1,4 @@
 import { Stack } from 'expo-router';
-import {Tabs} from "expo-router"
 import ChatBubble from '@/components/ChatBubble';
 import { useThemeColor } from '@/hooks/useThemeColor';
 
@@ -7,15 +6,19 @@ import { useThemeColor } from '@/hooks/useThemeColor';
 // 1. Import GestureHandlerRootView
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import React from 'react'; // Import React if not already present
+import { usePathname } from 'expo-router';
 import {StatusBar} from "expo-status-bar"
 
 export default function RootLayout() {
     const backgroundColor = useThemeColor({}, 'background'); // uses 'card' key from Colors.light/dark
     const textColor = useThemeColor({}, 'text');
 
+    const pathname = usePathname();
+
+
+    const hideChat = pathname === '/';
+
     return (
-        // 2. Wrap your Stack navigator with GestureHandlerRootView
-        // 3. Add style={{ flex: 1 }}
         <GestureHandlerRootView style={{ flex: 1 }}>
             <Stack screenOptions={{
                 headerStyle: {
@@ -40,9 +43,8 @@ export default function RootLayout() {
                 {/* If your file is actually project/[id].tsx, use that name: */}
                 {/* <Stack.Screen name="project/[id]" options={{ title: 'Project View' }} /> */}
             </Stack>
-        <ChatBubble />
+            {/* Only show ChatBubble if not on the login (index) page */}
+            {!hideChat && <ChatBubble />}
         </GestureHandlerRootView>
-
-
     );
 }
