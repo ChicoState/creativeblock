@@ -12,7 +12,7 @@
     "lint": "expo lint"
   },
   "jest": {
-    "preset": "jest-expo"
+    "preset": "react-native"
   },
   "dependencies": {
     "@expo/vector-icons": "^14.0.2",
@@ -55,6 +55,7 @@
   },
   "devDependencies": {
     "@babel/core": "^7.25.2",
+    "@stryker-mutator/core": "^8.7.1",
     "@stryker-mutator/jest-runner": "^8.7.1",
     "@stryker-mutator/typescript-checker": "^8.7.1",
     "@types/jest": "^29.5.12",
