@@ -42,7 +42,7 @@ export default function Index() {
     useEffect(() => {
         const unsubscribe = onAuthStateChanged(auth, (user) => {
             if (user) {
-                router.push('/home');
+                router.push('/projecthome');
             } else {
                 setIsLoading(false);
             }
@@ -65,7 +65,7 @@ export default function Index() {
         try {
             setLoggingIn(true);   
             await signInWithEmailAndPassword(auth, email, password);
-            router.push('/home');
+            router.push('/projecthome');
         } catch (error: any) {
             Alert.alert('Login Error', error.message);
         }finally {
@@ -120,7 +120,7 @@ export default function Index() {
         }
     };
 
-    const handleGuestLogin = () => router.push('/home');
+    const handleGuestLogin = () => router.push('/projecthome');
 
     const renderWelcomeScreen = () => (
         <ThemedView style={styles.container}>
