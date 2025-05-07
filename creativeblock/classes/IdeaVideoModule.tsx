@@ -41,7 +41,7 @@ export class IdeaVideoModule extends IdeaModule {
             source={{ uri: this.uri }}
             style={styles.videoPreview}
             useNativeControls
-            resizeMode="contain"
+            //resizeMode="contain"
           />
         ) : (
           <View style={styles.videoPreview} />

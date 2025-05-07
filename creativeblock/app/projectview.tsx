@@ -302,7 +302,7 @@ export default function ProjectView() {
             return new Idea(item.title || '', modules); // Provide default title
           });
 
-          setProject(new Project(data.title || 'Untitled Project', loadedIdeas)); // Provide default title
+          setProject(new Project(data.title || 'Untitled Project','', loadedIdeas)); // Provide default title
           setIdeas(loadedIdeas);
         } else {
            console.log("No such project document!");
