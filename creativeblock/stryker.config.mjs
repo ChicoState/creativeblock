@@ -8,7 +8,12 @@ const config = {
   reporters: ["progress", "clear-text", "html"],
   coverageAnalysis: "off",
   jest: {
-    projectType: "create-react-app",
+    projectType: "custom",
+    configFile: "jest.config.ts",
+    config: {
+      testEnvironment: "jest-environment-jsdom-sixteen"
+    },
+    enableFindRelatedTests: true
   },
   checkers: ["typescript"],
   tsconfigFile: "tsconfig.json",
