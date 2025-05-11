@@ -5,12 +5,13 @@ export class Project {
     private title: string; // Name of the project.
     private category: string;
     private ideas: Idea[] = []; // Array of ideas.
-    private is_public : bool;
+    private is_public : boolean;
 
     constructor(title: string, category?: string, ideas?: Idea[]) { // Constructor for the Project class.
         this.title = title;
         this.category = (category) ? category : "";
         if (ideas) this.ideas = ideas;
+        this.is_public = false;
     }
     public getTitle(): string { // Getter for title.
         return this.title;
@@ -24,11 +25,11 @@ export class Project {
         return this.ideas;
     }
 
-public getIsPublic() : bool {
-    return is_public;
+public getIsPublic() : boolean {
+    return this.is_public;
     }
 
-public setIsPublic (newPublicity) : void {
+public setIsPublic (newPublicity: boolean) : void {
     this.is_public = newPublicity;
     }
 
