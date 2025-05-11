@@ -34,10 +34,6 @@ export default function RootLayout() {
                 <Stack.Screen name="index" options={{ title: 'Home' }} />
                 <Stack.Screen name="createproject" options={{ title: 'Create Project' }} />
                 <Stack.Screen name="projecthome" options={{ title: 'Project Home' }} />
-                <Stack.Screen name="(tabs)" />
-                {/* Ensure the screen name matches the file name if using file-based routing
-                    e.g., if your file is project/[id].tsx, the name might be inferred differently
-                    or defined specifically like "project/[id]" */}
                 <Stack.Screen name="projectview" options={{ title: 'Project View' }} />
 
                 {/* If your file is actually project/[id].tsx, use that name: */}
