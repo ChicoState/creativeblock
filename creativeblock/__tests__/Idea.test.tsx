@@ -31,4 +31,17 @@ describe("Test Idea Class", ()=> {
         expect(mods.length).toBe(1);
       });
 
+      test("Test removing Idea Modules while empty", ()=> {
+        var mods :IdeaModule[] = [];
+        var myidea = new Idea("",mods);
+        expect( myidea.removeModule(0)).toBe(undefined);
+      });      
+
+      test("Test removing Idea Modules while out of bounds", ()=> {
+        var mods :IdeaModule[] = [];
+        var myidea = new Idea("",mods);
+        myidea.addModule(new IdeaModule());
+        myidea.addModule(new IdeaModule());
+        expect( myidea.removeModule(3)).toBe(undefined);
+      });   
 })
